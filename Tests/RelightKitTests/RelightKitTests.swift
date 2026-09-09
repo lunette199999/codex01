@@ -1,0 +1,149 @@
+import XCTest
+import simd
+@testable import RelightKit
+
+final class UniformLayoutTests: XCTestCase {
+
+    /// The shader reads this struct by offset. If a field is added, reordered,
+    /// or changed from SIMD4, Metal keeps reading the old offsets and the
+    /// symptom is a subtly wrong image rather than a crash - so pin the size.
+    func testUniformStrideMatchesShader() {
+        XCTAssertEqual(MemoryLayout<RelightUniforms>.stride, 11 * 16)
+        XCTAssertEqual(MemoryLayout<RelightUniforms>.alignment, 16)
+    }
+
+    func testLayerPackingReachesTheRightChannel() {
+        var layer = PortraitLayer(
+            name: "hair_front", index: 4, base: 0.78,
+            relief: 0.08, normalStrength: 2.0, parallax: 1.0
+        )
+        layer.coverageSlot = 3
+        layer.opacity = 0.5
+
+        let uniforms = LightRig().uniforms(
+            for: layer,
+            parallax: SIMD2(0.01, -0.02),
+            parallaxScale: 2.0
+        )
+
+        XCTAssertEqual(uniforms.layer.x, 1.0, accuracy: 1e-6)   // layerParallax
+        XCTAssertEqual(uniforms.layer.y, 2.0, accuracy: 1e-6)   // parallaxScale
+        XCTAssertEqual(uniforms.layer.z, 3.0, accuracy: 1e-6)   // coverageSlot
+        XCTAssertEqual(uniforms.layer.w, 0.5, accuracy: 1e-6)   // opacity
+        XCTAssertEqual(uniforms.parallax.x, 0.01, accuracy: 1e-6)
+        XCTAssertEqual(uniforms.parallax.y, -0.02, accuracy: 1e-6)
+    }
+
+    func testDirectionsAreNormalisedIntoUniforms() {
+        var rig = LightRig()
+        rig.keyDirection = SIMD3(0, 0, 5)   // deliberately not unit length
+
+        let uniforms = rig.uniforms(for: .test)
+        XCTAssertEqual(simd_length(SIMD3(uniforms.keyDir.x, uniforms.keyDir.y, uniforms.keyDir.z)),
+                       1.0, accuracy: 1e-5)
+        XCTAssertEqual(uniforms.keyDir.w, rig.keyIntensity, accuracy: 1e-6)
+    }
+
+    /// A zero direction from a slider at rest would produce NaN through
+    /// simd_normalize and blacken the entire frame.
+    func testZeroDirectionDoesNotProduceNaN() {
+        var rig = LightRig()
+        rig.keyDirection = .zero
+        let d = rig.uniforms(for: .test).keyDir
+        XCTAssertFalse(d.x.isNaN || d.y.isNaN || d.z.isNaN)
+        XCTAssertEqual(simd_length(SIMD3(d.x, d.y, d.z)), 1.0, accuracy: 1e-5)
+    }
+}
+
+final class ColorTemperatureTests: XCTestCase {
+
+    func testWarmerIsRedderThanCooler() {
+        let warm = EnvironmentLight.kelvinToRGB(2200)
+        let cool = EnvironmentLight.kelvinToRGB(9000)
+        XCTAssertGreaterThan(warm.x / max(warm.z, 1e-4), cool.x / max(cool.z, 1e-4))
+    }
+
+    func testOutputIsNormalisedAndInRange() {
+        for kelvin in stride(from: Float(1200), through: 20000, by: 400) {
+            let rgb = EnvironmentLight.kelvinToRGB(kelvin)
+            XCTAssertEqual(rgb.max(), 1.0, accuracy: 1e-4, "not normalised at \(kelvin)K")
+            XCTAssertGreaterThanOrEqual(rgb.min(), 0.0, "negative channel at \(kelvin)K")
+        }
+    }
+}
+
+final class SolarPositionTests: XCTestCase {
+
+    private func date(_ iso: String) -> Date {
+        let formatter = ISO8601DateFormatter()
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter.date(from: iso)!
+    }
+
+    func testEquinoxNoonAtEquatorIsOverhead() {
+        let position = SolarPosition(
+            date: date("2026-03-20T12:00:00Z"),
+            latitude: 0, longitude: 0,
+            timeZone: TimeZone(identifier: "UTC")!
+        )
+        XCTAssertGreaterThan(position.elevation, 85)
+    }
+
+    func testMidnightIsBelowHorizon() {
+        let position = SolarPosition(
+            date: date("2026-06-21T00:00:00Z"),
+            latitude: 40, longitude: 0,
+            timeZone: TimeZone(identifier: "UTC")!
+        )
+        XCTAssertLessThan(position.elevation, 0)
+    }
+
+    /// The key must keep some forward component or the face goes fully black
+    /// when the sun is behind the notional window.
+    func testKeyStaysInFrontOfTheSubject() {
+        for hour in 0...23 {
+            let position = SolarPosition(
+                date: date(String(format: "2026-06-21T%02d:00:00Z", hour)),
+                latitude: 35, longitude: 139,
+                timeZone: TimeZone(identifier: "UTC")!
+            )
+            let direction = position.viewSpaceDirection(windowBearing: 180)
+            XCTAssertGreaterThan(direction.z, 0, "key fell behind the subject at \(hour):00")
+        }
+    }
+
+    func testNightIsCoolerAndDimmerThanNoon() {
+        let noon = SolarPosition(date: date("2026-06-21T12:00:00Z"),
+                                 latitude: 35, longitude: 0,
+                                 timeZone: TimeZone(identifier: "UTC")!)
+        let night = SolarPosition(date: date("2026-06-21T00:00:00Z"),
+                                  latitude: 35, longitude: 0,
+                                  timeZone: TimeZone(identifier: "UTC")!)
+        XCTAssertGreaterThan(night.colorTemperature, noon.colorTemperature)
+        XCTAssertLessThan(night.keyIntensity, noon.keyIntensity)
+        XCTAssertLessThan(night.exposure, noon.exposure)
+    }
+}
+
+final class IdleParallaxTests: XCTestCase {
+
+    func testStaysWithinAmplitudeAndKeepsMoving() {
+        var idle = IdleParallax()
+        var samples: [SIMD2<Float>] = []
+        for _ in 0..<600 { samples.append(idle.advance(by: 1.0 / 60.0)) }
+
+        for sample in samples {
+            XCTAssertLessThanOrEqual(abs(sample.x), idle.amplitude * 1.01)
+            XCTAssertLessThanOrEqual(abs(sample.y), idle.amplitude * 1.01)
+        }
+        // Ten seconds in, it must not have settled into a fixed point.
+        XCTAssertGreaterThan(simd_distance(samples[300], samples[599]), 1e-4)
+    }
+}
+
+private extension PortraitLayer {
+    static var test: PortraitLayer {
+        PortraitLayer(name: "face", index: 3, base: 0.55,
+                      relief: 0.22, normalStrength: 2.4, parallax: 0.55)
+    }
+}

@@ -1,0 +1,840 @@
+<title>Relight Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* Committed single dark theme. A lighting tool cannot have a light mode:
+   judging a relit face against a bright UI shifts your perception of the
+   midtones, which is the whole thing you are here to tune. Every grading
+   suite makes the same call. */
+:root {
+  --ground:      #16171A;
+  --panel:       #1E2024;
+  --panel-high:  #24272C;
+  --line:        #2E3137;
+  --text:        #D8DAE0;
+  --muted:       #878C97;
+  --dim:         #5C616B;
+  --key:         #E8B14C;   /* tungsten amber - the key light */
+  --fill:        #6BA8D6;   /* sky blue - the fill */
+  --font-ui:  "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+}
+header h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+header p { margin: 0; color: var(--muted); font-size: 12px; }
+header .spacer { flex: 1; }
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 0;
+  height: calc(100vh - 54px);
+  min-height: 560px;
+}
+
+/* --- viewport --- */
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--backdrop, #2A2C31);
+  transition: background 240ms ease;
+}
+.stage canvas { display: block; cursor: grab; touch-action: none; }
+.stage canvas:active { cursor: grabbing; }
+
+.stage-hint {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  color: #fff;
+  opacity: 0.5;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.backdrops {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  gap: 4px;
+}
+.backdrops button {
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(20,21,24,0.62);
+  backdrop-filter: blur(6px);
+  color: #E4E6EB;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.backdrops button[aria-pressed="true"] {
+  border-color: var(--key);
+  color: var(--key);
+}
+
+/* --- rig rail --- */
+
+.rail {
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+  overflow-y: auto;
+  padding: 0 0 26px;
+}
+
+.group { border-bottom: 1px solid var(--line); padding: 14px 18px 16px; }
+
+.group h2 {
+  margin: 0 0 11px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.group h2::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--swatch, var(--dim));
+}
+
+.row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; margin-bottom: 7px; }
+.row:last-child { margin-bottom: 0; }
+
+.row label {
+  font-family: var(--font-num);
+  font-size: 11px;
+  color: var(--muted);
+}
+.row output {
+  font-family: var(--font-num);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.row input[type="range"] { grid-column: 1 / -1; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px; background: var(--line); border-radius: 1px;
+}
+input[type="range"]::-moz-range-track {
+  height: 2px; background: var(--line); border-radius: 1px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px; height: 11px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--text);
+  border: none;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 11px; height: 11px; border: none; border-radius: 50%; background: var(--text);
+}
+input[type="range"]:focus-visible { outline: 2px solid var(--key); outline-offset: 3px; }
+
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.presets button {
+  background: var(--panel-high);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: left;
+}
+.presets button:hover { border-color: var(--dim); }
+.presets button[aria-pressed="true"] { border-color: var(--key); color: var(--key); }
+.presets button:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+
+.ball-row { display: flex; align-items: center; gap: 13px; }
+.ball-row canvas {
+  border-radius: 50%;
+  background: #101114;
+  flex: none;
+}
+.ball-row p { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.45; }
+
+.export { padding: 14px 18px; }
+.export button {
+  width: 100%;
+  background: var(--key);
+  border: none;
+  color: #1A1408;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 9px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.export button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.export p { margin: 8px 0 0; font-size: 11px; color: var(--dim); line-height: 1.45; }
+
+.toggle { display: flex; align-items: center; gap: 8px; font-family: var(--font-num); font-size: 11px; color: var(--muted); }
+.toggle input { accent-color: var(--key); }
+
+.error {
+  margin: 24px;
+  padding: 14px 16px;
+  border: 1px solid #6B3A3A;
+  background: #241C1C;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #E5C2C2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; }
+}
+</style>
+
+<header>
+  <h1>Relight Bench</h1>
+  <p>2.5D portrait relighting &mdash; same model as <span style="font-family:var(--font-num)">Relight.metal</span></p>
+  <span class="spacer"></span>
+  <p id="status">loading maps&hellip;</p>
+</header>
+
+<main>
+  <section class="stage" id="stage">
+    <div class="backdrops" role="group" aria-label="Backdrop">
+      <button data-backdrop="neutral" aria-pressed="true">Neutral</button>
+      <button data-backdrop="warm" aria-pressed="false">Warm room</button>
+      <button data-backdrop="cool" aria-pressed="false">Cool screen</button>
+    </div>
+    <canvas id="view" width="720" height="960"></canvas>
+    <p class="stage-hint">Drag to place the key light</p>
+  </section>
+
+  <aside class="rail">
+    <div class="group" style="--swatch: var(--key)">
+      <h2>Key</h2>
+      <div class="ball-row">
+        <canvas id="ball" width="72" height="72" aria-label="Grey ball reference"></canvas>
+        <p>18% grey reference. Same rig, ideal sphere &mdash; read the terminator here, not on the face.</p>
+      </div>
+    </div>
+
+    <div class="group" style="--swatch: var(--key)">
+      <h2>Key light</h2>
+      <div class="row"><label for="keyIntensity">keyIntensity</label><output id="keyIntensity-v"></output><input type="range" id="keyIntensity" min="0" max="2" step="0.01" value="1.05"></div>
+      <div class="row"><label for="keyWrap">keyWrap</label><output id="keyWrap-v"></output><input type="range" id="keyWrap" min="0" max="1" step="0.01" value="0.45"></div>
+      <div class="row"><label for="keyKelvin">kelvin</label><output id="keyKelvin-v"></output><input type="range" id="keyKelvin" min="1800" max="10000" step="50" value="5600"></div>
+    </div>
+
+    <div class="group" style="--swatch: var(--fill)">
+      <h2>Fill</h2>
+      <div class="row"><label for="fillIntensity">fillIntensity</label><output id="fillIntensity-v"></output><input type="range" id="fillIntensity" min="0" max="1" step="0.01" value="0.32"></div>
+      <div class="row"><label for="fillWrap">fillWrap</label><output id="fillWrap-v"></output><input type="range" id="fillWrap" min="0" max="1" step="0.01" value="0.70"></div>
+    </div>
+
+    <div class="group" style="--swatch: #B9A98C">
+      <h2>Rim</h2>
+      <div class="row"><label for="rimIntensity">rimIntensity</label><output id="rimIntensity-v"></output><input type="range" id="rimIntensity" min="0" max="2" step="0.01" value="0.55"></div>
+      <div class="row"><label for="rimPower">rimPower</label><output id="rimPower-v"></output><input type="range" id="rimPower" min="1" max="8" step="0.1" value="2.6"></div>
+    </div>
+
+    <div class="group" style="--swatch: #9E4A3C">
+      <h2>Skin</h2>
+      <div class="row"><label for="sssIntensity">sssIntensity</label><output id="sssIntensity-v"></output><input type="range" id="sssIntensity" min="0" max="1" step="0.01" value="0.42"></div>
+      <div class="row"><label for="sssPower">sssPower</label><output id="sssPower-v"></output><input type="range" id="sssPower" min="0.5" max="6" step="0.1" value="2.2"></div>
+      <div class="row"><label for="specIntensity">specIntensity</label><output id="specIntensity-v"></output><input type="range" id="specIntensity" min="0" max="0.6" step="0.01" value="0.18"></div>
+      <div class="row"><label for="specGloss">specGloss</label><output id="specGloss-v"></output><input type="range" id="specGloss" min="4" max="120" step="1" value="28"></div>
+    </div>
+
+    <div class="group" style="--swatch: #4E5A6B">
+      <h2>Scene</h2>
+      <div class="row"><label for="ambientIntensity">ambientIntensity</label><output id="ambientIntensity-v"></output><input type="range" id="ambientIntensity" min="0" max="1.5" step="0.01" value="0.55"></div>
+      <div class="row"><label for="exposure">exposure</label><output id="exposure-v"></output><input type="range" id="exposure" min="0.4" max="1.6" step="0.01" value="1.0"></div>
+      <div class="row"><label for="parallaxScale">parallaxScale</label><output id="parallaxScale-v"></output><input type="range" id="parallaxScale" min="0" max="3" step="0.05" value="1"></div>
+      <label class="toggle"><input type="checkbox" id="idle" checked> idle drift</label>
+    </div>
+
+    <div class="group" style="--swatch: var(--key)">
+      <h2>Environment</h2>
+      <div class="presets" role="group" aria-label="Environment preset">
+        <button data-preset="tungsten">Tungsten</button>
+        <button data-preset="office">Office</button>
+        <button data-preset="eveningLamp">Evening lamp</button>
+        <button data-preset="screenGlow">Screen glow</button>
+      </div>
+      <div style="margin-top:9px">
+        <div class="presets"><button data-preset="daylight" style="grid-column:1/-1">Daylight &mdash; solve for time of day</button></div>
+      </div>
+      <div class="row" style="margin-top:9px"><label for="hour">hour</label><output id="hour-v"></output><input type="range" id="hour" min="0" max="24" step="0.25" value="14"></div>
+      <div class="row"><label for="latitude">latitude</label><output id="latitude-v"></output><input type="range" id="latitude" min="-60" max="60" step="1" value="31"></div>
+    </div>
+
+    <div class="export">
+      <button id="copy">Copy rig as JSON</button>
+      <p>Field names match <span style="font-family:var(--font-num)">LightRig</span> in Swift &mdash; paste straight into a decoder.</p>
+    </div>
+  </aside>
+</main>
+
+<script>
+"use strict";
+
+// Replaced with inline data URIs by tools/bundle_sandbox.py for the standalone
+// build. When null, maps are fetched from disk (serve the repo root over HTTP).
+const EMBEDDED_MAPS = null; /* __EMBEDDED_MAPS__ */
+const MAP_BASE = "../assets/placeholder/mannequin.";
+const MAP_KINDS = ["albedo", "normal", "ao", "coverage"];
+const mapURL = (kind) => (EMBEDDED_MAPS ? EMBEDDED_MAPS[kind] : MAP_BASE + kind + ".png");
+
+// Layer table. Mirrors LAYERS in tools/portrait_maps.py; the `slot` is the
+// coverage channel and the order here is the draw order, back to front.
+const LAYERS = [
+  { name: "hair_back",  slot: 0, parallax: -0.35 },
+  { name: "body",       slot: 1, parallax:  0.15 },
+  { name: "face",       slot: 2, parallax:  0.55 },
+  { name: "hair_front", slot: 3, parallax:  1.00 },
+];
+
+const IMAGE_ASPECT = 768 / 1024;
+
+// --- shading, ported from Relight.metal ------------------------------------
+// Kept line-for-line comparable with the Metal and Python versions so the three
+// can be diffed by eye when the model changes.
+
+const SHADE_GLSL = `
+precision highp float;
+
+uniform vec4 uKeyDir;        // xyz dir, w intensity
+uniform vec4 uKeyColor;      // rgb, w wrap
+uniform vec4 uFillDir;
+uniform vec4 uFillColor;
+uniform vec4 uRimDir;
+uniform vec4 uRimColor;      // rgb, w power
+uniform vec4 uAmbientColor;  // rgb, w intensity
+uniform vec4 uSssColor;      // rgb, w intensity
+uniform vec4 uParams;        // sssPower, specIntensity, specGloss, exposure
+
+vec3 srgbToLinear(vec3 c) {
+  return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
+}
+vec3 linearToSrgb(vec3 c) {
+  c = max(c, vec3(0.0));
+  return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c));
+}
+float wrapDiffuse(float ndl, float w) {
+  return clamp((ndl + w) / (1.0 + w), 0.0, 1.0);
+}
+
+vec3 shadeRelight(vec3 albedo, vec3 N, float ao) {
+  const vec3 V = vec3(0.0, 0.0, 1.0);
+
+  vec3 keyDir  = normalize(uKeyDir.xyz);
+  vec3 fillDir = normalize(uFillDir.xyz);
+  vec3 rimDir  = normalize(uRimDir.xyz);
+
+  float nDotKey  = dot(N, keyDir);
+  float nDotFill = dot(N, fillDir);
+  float nDotRim  = dot(N, rimDir);
+  float nDotView = dot(N, V);
+
+  float diffuseKey  = wrapDiffuse(nDotKey,  uKeyColor.w)  * uKeyDir.w;
+  float diffuseFill = wrapDiffuse(nDotFill, uFillColor.w) * uFillDir.w;
+
+  float scatter = pow(clamp(1.0 - abs(nDotKey), 0.0, 1.0), uParams.x)
+                * clamp(diffuseKey, 0.0, 1.0) * uSssColor.w;
+
+  vec3 H = normalize(keyDir + V);
+  float specular = pow(clamp(dot(N, H), 0.0, 1.0), uParams.z)
+                 * uParams.y * step(0.0, nDotKey);
+
+  float fresnel = pow(clamp(1.0 - nDotView, 0.0, 1.0), uRimColor.w);
+  float rim = fresnel * clamp(nDotRim, 0.0, 1.0) * uRimDir.w;
+
+  vec3 ambient = uAmbientColor.rgb * uAmbientColor.w * ao;
+
+  vec3 lit = albedo * (ambient + uKeyColor.rgb * diffuseKey + uFillColor.rgb * diffuseFill * ao);
+  lit += albedo * uSssColor.rgb * scatter;
+  lit += uKeyColor.rgb * specular;
+  lit += uRimColor.rgb * rim;
+
+  return lit * uParams.w;
+}
+`;
+
+const LAYER_VERT = `#version 300 es
+in vec2 aPos;
+uniform vec2 uFit;
+uniform vec2 uParallax;
+uniform vec2 uLayer;   // x = layerParallax, y = parallaxScale
+out vec2 vUV;
+void main() {
+  vec2 offset = uParallax * uLayer.x * uLayer.y;
+  gl_Position = vec4(aPos * uFit + offset, 0.0, 1.0);
+  vUV = vec2((aPos.x + 1.0) * 0.5, 1.0 - (aPos.y + 1.0) * 0.5);
+}`;
+
+const LAYER_FRAG = `#version 300 es
+${SHADE_GLSL}
+in vec2 vUV;
+out vec4 fragColor;
+uniform sampler2D uAlbedo, uNormal, uAO, uCoverage;
+uniform float uSlot;
+void main() {
+  vec4 albedoSample = texture(uAlbedo, vUV);
+  vec4 cov4 = texture(uCoverage, vUV);
+
+  int slot = int(uSlot + 0.5);
+  float coverage = slot == 0 ? cov4.r : slot == 1 ? cov4.g : slot == 2 ? cov4.b : cov4.a;
+  coverage *= albedoSample.a;
+  if (coverage <= 0.001) discard;
+
+  vec3 albedo = srgbToLinear(albedoSample.rgb);
+  vec3 N = normalize(texture(uNormal, vUV).xyz * 2.0 - 1.0);
+  float ao = texture(uAO, vUV).r;
+
+  fragColor = vec4(linearToSrgb(shadeRelight(albedo, N, ao)) * coverage, coverage);
+}`;
+
+// The grey ball is the same shader over an analytic sphere. A lighting artist
+// checks a grey and a chrome ball on set for exactly this reason: the face has
+// albedo variation and baked detail, the sphere has neither, so the rig's own
+// behaviour is legible on it.
+const BALL_FRAG = `#version 300 es
+${SHADE_GLSL}
+in vec2 vUV;
+out vec4 fragColor;
+void main() {
+  vec2 p = vUV * 2.0 - 1.0;
+  float r2 = dot(p, p);
+  if (r2 > 1.0) discard;
+  vec3 N = vec3(p.x, -p.y, sqrt(max(1.0 - r2, 0.0)));
+  vec3 lit = shadeRelight(vec3(0.18), N, 1.0);   // 18% grey card
+  float edge = smoothstep(1.0, 0.985, r2);
+  fragColor = vec4(linearToSrgb(lit) * edge, edge);
+}`;
+
+// --- rig state -------------------------------------------------------------
+
+const rig = {
+  keyDirection: [-0.45, 0.35, 0.82], keyColor: [1.0, 0.96, 0.90], keyIntensity: 1.05,
+  fillDirection: [0.55, -0.10, 0.83], fillColor: [0.72, 0.80, 0.95], fillIntensity: 0.32,
+  rimDirection: [0.30, 0.55, -0.78], rimColor: [1.0, 0.94, 0.86], rimIntensity: 0.55, rimPower: 2.6,
+  ambientColor: [0.34, 0.38, 0.46], ambientIntensity: 0.55,
+  keyWrap: 0.45, fillWrap: 0.70,
+  sssColor: [0.62, 0.20, 0.14], sssIntensity: 0.42, sssPower: 2.2,
+  specIntensity: 0.18, specGloss: 28.0,
+  exposure: 1.0,
+};
+
+let parallaxScale = 1.0;
+let idleEnabled = true;
+let keyKelvin = 5600;
+
+// Helland's blackbody fit, normalised. Same function as EnvironmentLight.kelvinToRGB.
+function kelvinToRGB(kelvin) {
+  const t = Math.max(1000, Math.min(kelvin, 40000)) / 100;
+  const r = t <= 66 ? 255 : 329.69873 * Math.pow(t - 60, -0.13320476);
+  const g = t <= 66 ? 99.4708 * Math.log(t) - 161.11957
+                    : 288.12217 * Math.pow(t - 60, -0.07551485);
+  const b = t >= 66 ? 255 : (t <= 19 ? 0 : 138.51773 * Math.log(t - 10) - 305.04479);
+  const rgb = [r, g, b].map((c) => Math.max(0, Math.min(c / 255, 1)));
+  const peak = Math.max(...rgb, 1e-4);
+  return rgb.map((c) => c / peak);
+}
+
+const BACKDROPS = {
+  neutral: { css: "#2A2C31", ambient: null },
+  warm:    { css: "linear-gradient(160deg, #4A3524, #2A1F17)", ambient: [0.20, 0.12, 0.07] },
+  cool:    { css: "linear-gradient(160deg, #1D3350, #121C2C)", ambient: [0.07, 0.13, 0.26] },
+};
+let backdrop = "neutral";
+
+/** Ambient picks up the room, mirroring EnvironmentLight.ambientSample. */
+function effectiveAmbient() {
+  const sample = BACKDROPS[backdrop].ambient;
+  if (!sample) return rig.ambientColor;
+  const k = 0.35;   // EnvironmentLight.ambientInfluence
+  return rig.ambientColor.map((c, i) => c * (1 - k) + sample[i] * k);
+}
+
+// --- WebGL -----------------------------------------------------------------
+
+const view = document.getElementById("view");
+const ballCanvas = document.getElementById("ball");
+const status = document.getElementById("status");
+
+function compile(gl, vertSrc, fragSrc) {
+  const program = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vertSrc], [gl.FRAGMENT_SHADER, fragSrc]]) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(shader));
+    }
+    gl.attachShader(program, shader);
+  }
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program));
+  }
+  return program;
+}
+
+function setRigUniforms(gl, program) {
+  const u = (n) => gl.getUniformLocation(program, n);
+  const ambient = effectiveAmbient();
+  gl.uniform4f(u("uKeyDir"), ...rig.keyDirection, rig.keyIntensity);
+  gl.uniform4f(u("uKeyColor"), ...rig.keyColor, rig.keyWrap);
+  gl.uniform4f(u("uFillDir"), ...rig.fillDirection, rig.fillIntensity);
+  gl.uniform4f(u("uFillColor"), ...rig.fillColor, rig.fillWrap);
+  gl.uniform4f(u("uRimDir"), ...rig.rimDirection, rig.rimIntensity);
+  gl.uniform4f(u("uRimColor"), ...rig.rimColor, rig.rimPower);
+  gl.uniform4f(u("uAmbientColor"), ...ambient, rig.ambientIntensity);
+  gl.uniform4f(u("uSssColor"), ...rig.sssColor, rig.sssIntensity);
+  gl.uniform4f(u("uParams"), rig.sssPower, rig.specIntensity, rig.specGloss, rig.exposure);
+}
+
+function makeQuad(gl, program) {
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(program, "aPos");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  return buffer;
+}
+
+function loadTexture(gl, image) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return tex;
+}
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("could not load " + url.slice(0, 64)));
+    img.src = url;
+  });
+}
+
+function fail(message) {
+  document.querySelector("main").innerHTML =
+    `<div class="error"><strong>Could not start.</strong><br>${message}</div>`;
+  status.textContent = "error";
+}
+
+async function start() {
+  const gl = view.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: true });
+  const ballGL = ballCanvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: true });
+  if (!gl || !ballGL) return fail("WebGL2 is not available in this browser.");
+
+  let images;
+  try {
+    images = await Promise.all(MAP_KINDS.map((kind) => loadImage(mapURL(kind))));
+  } catch (err) {
+    return fail(
+      `${err.message}<br><br>Serve the repo over HTTP so the maps resolve, e.g. ` +
+      `<span style="font-family:var(--font-num)">python3 -m http.server</span> from the project root, ` +
+      `then open <span style="font-family:var(--font-num)">/web/sandbox.html</span>.`
+    );
+  }
+
+  let layerProgram, ballProgram;
+  try {
+    layerProgram = compile(gl, LAYER_VERT, LAYER_FRAG);
+    ballProgram = compile(ballGL, LAYER_VERT, BALL_FRAG);
+  } catch (err) {
+    return fail("Shader failed to compile:<br><pre>" + err.message + "</pre>");
+  }
+
+  gl.useProgram(layerProgram);
+  makeQuad(gl, layerProgram);
+  const textures = images.map((img) => loadTexture(gl, img));
+  MAP_KINDS.forEach((kind, i) => {
+    gl.activeTexture(gl.TEXTURE0 + i);
+    gl.bindTexture(gl.TEXTURE_2D, textures[i]);
+  });
+  ["uAlbedo", "uNormal", "uAO", "uCoverage"].forEach((name, i) => {
+    gl.uniform1i(gl.getUniformLocation(layerProgram, name), i);
+  });
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);   // premultiplied
+
+  ballGL.useProgram(ballProgram);
+  makeQuad(ballGL, ballProgram);
+  ballGL.enable(ballGL.BLEND);
+  ballGL.blendFunc(ballGL.ONE, ballGL.ONE_MINUS_SRC_ALPHA);
+
+  status.textContent = "ready";
+
+  let idleTime = 0;
+  let pointer = { x: 0, y: 0 };
+  let last = performance.now();
+
+  function resize() {
+    const stage = document.getElementById("stage");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const boxW = stage.clientWidth - 48;
+    const boxH = stage.clientHeight - 48;
+    let w = boxH * IMAGE_ASPECT;
+    let h = boxH;
+    if (w > boxW) { w = boxW; h = boxW / IMAGE_ASPECT; }
+    view.style.width = w + "px";
+    view.style.height = h + "px";
+    view.width = Math.round(w * dpr);
+    view.height = Math.round(h * dpr);
+  }
+
+  function frame(now) {
+    const delta = Math.min((now - last) / 1000, 0.1);
+    last = now;
+
+    // Two out-of-phase pairs at incommensurable periods: slow motion that never
+    // visibly loops. Matches IdleParallax in RelightRenderer.swift.
+    let px = pointer.x * 0.02;
+    let py = pointer.y * 0.02;
+    if (idleEnabled) {
+      idleTime += delta * 0.35;
+      px += (Math.sin(idleTime * 0.37) * 0.6 + Math.sin(idleTime * 0.83) * 0.4) * 0.012;
+      py += (Math.sin(idleTime * 0.29 + 1.7) * 0.5 + Math.sin(idleTime * 0.61 + 0.4) * 0.3) * 0.012;
+    }
+
+    gl.viewport(0, 0, view.width, view.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(layerProgram);
+    setRigUniforms(gl, layerProgram);
+
+    const canvasAspect = view.width / view.height;
+    const fit = canvasAspect > IMAGE_ASPECT
+      ? [IMAGE_ASPECT / canvasAspect, 1]
+      : [1, canvasAspect / IMAGE_ASPECT];
+    gl.uniform2f(gl.getUniformLocation(layerProgram, "uFit"), fit[0], fit[1]);
+    gl.uniform2f(gl.getUniformLocation(layerProgram, "uParallax"), px, py);
+
+    for (const layer of LAYERS) {
+      gl.uniform2f(gl.getUniformLocation(layerProgram, "uLayer"), layer.parallax, parallaxScale);
+      gl.uniform1f(gl.getUniformLocation(layerProgram, "uSlot"), layer.slot);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    ballGL.viewport(0, 0, ballCanvas.width, ballCanvas.height);
+    ballGL.clearColor(0, 0, 0, 0);
+    ballGL.clear(ballGL.COLOR_BUFFER_BIT);
+    ballGL.useProgram(ballProgram);
+    setRigUniforms(ballGL, ballProgram);
+    ballGL.uniform2f(ballGL.getUniformLocation(ballProgram, "uFit"), 1, 1);
+    ballGL.uniform2f(ballGL.getUniformLocation(ballProgram, "uParallax"), 0, 0);
+    ballGL.uniform2f(ballGL.getUniformLocation(ballProgram, "uLayer"), 0, 0);
+    ballGL.drawArrays(ballGL.TRIANGLE_STRIP, 0, 4);
+
+    requestAnimationFrame(frame);
+  }
+
+  // --- interaction ---
+
+  let dragging = false;
+  function placeKey(event) {
+    const rect = view.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = 1 - ((event.clientY - rect.top) / rect.height) * 2;
+    // Map the cursor onto the front hemisphere. Keeping z away from 0 stops the
+    // key from sliding fully side-on, where the face goes black.
+    const r = Math.min(Math.hypot(x, y), 1);
+    const z = Math.sqrt(Math.max(1 - r * r, 0.04));
+    rig.keyDirection = [x, y, z];
+  }
+  view.addEventListener("pointerdown", (e) => {
+    dragging = true; view.setPointerCapture(e.pointerId); placeKey(e);
+  });
+  view.addEventListener("pointermove", (e) => {
+    const rect = view.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = 1 - ((e.clientY - rect.top) / rect.height) * 2;
+    if (dragging) placeKey(e);
+  });
+  view.addEventListener("pointerup", () => { dragging = false; });
+  view.addEventListener("pointerleave", () => { pointer.x = 0; pointer.y = 0; });
+
+  const bind = (id, apply, format = (v) => v.toFixed(2)) => {
+    const input = document.getElementById(id);
+    const out = document.getElementById(id + "-v");
+    const sync = () => {
+      const value = parseFloat(input.value);
+      apply(value);
+      out.textContent = format(value);
+    };
+    input.addEventListener("input", sync);
+    sync();
+  };
+
+  bind("keyIntensity", (v) => (rig.keyIntensity = v));
+  bind("keyWrap", (v) => (rig.keyWrap = v));
+  bind("keyKelvin", (v) => { keyKelvin = v; rig.keyColor = kelvinToRGB(v); }, (v) => v.toFixed(0) + "K");
+  bind("fillIntensity", (v) => (rig.fillIntensity = v));
+  bind("fillWrap", (v) => (rig.fillWrap = v));
+  bind("rimIntensity", (v) => (rig.rimIntensity = v));
+  bind("rimPower", (v) => (rig.rimPower = v), (v) => v.toFixed(1));
+  bind("sssIntensity", (v) => (rig.sssIntensity = v));
+  bind("sssPower", (v) => (rig.sssPower = v), (v) => v.toFixed(1));
+  bind("specIntensity", (v) => (rig.specIntensity = v));
+  bind("specGloss", (v) => (rig.specGloss = v), (v) => v.toFixed(0));
+  bind("ambientIntensity", (v) => (rig.ambientIntensity = v));
+  bind("exposure", (v) => (rig.exposure = v));
+  bind("parallaxScale", (v) => (parallaxScale = v));
+
+  document.getElementById("idle").addEventListener("change", (e) => {
+    idleEnabled = e.target.checked;
+  });
+
+  // Environment presets, mirroring IndoorPreset in EnvironmentLight.swift.
+  const PRESETS = {
+    tungsten:    { dir: [-0.55, 0.42, 0.72], kelvin: 2700, intensity: 0.85, exposure: 0.92 },
+    office:      { dir: [0.05, 0.88, 0.47],  kelvin: 4200, intensity: 0.95, exposure: 1.00 },
+    eveningLamp: { dir: [-0.72, 0.18, 0.67], kelvin: 2200, intensity: 0.78, exposure: 0.80 },
+    screenGlow:  { dir: [0.00, 0.12, 0.99],  kelvin: 6800, intensity: 0.70, exposure: 0.86 },
+  };
+
+  function applyDaylight() {
+    const hour = parseFloat(document.getElementById("hour").value);
+    const latitude = parseFloat(document.getElementById("latitude").value);
+    // Enough of the solar model to be useful here: declination held at equinox,
+    // hour angle from local solar time. SolarPosition in Swift does it properly.
+    const hourAngle = ((hour - 12) / 12) * Math.PI;
+    const lat = (latitude * Math.PI) / 180;
+    const elevation = Math.asin(Math.cos(lat) * Math.cos(hourAngle));
+    const elevationDeg = (elevation * 180) / Math.PI;
+
+    const kelvin = elevationDeg <= 0 ? 8000 : 1900 + Math.min(elevationDeg / 35, 1) * (6200 - 1900);
+    const fade = Math.max(0, Math.min((elevationDeg + 6) / 12, 1));
+
+    rig.keyDirection = [Math.sin(hourAngle) * Math.cos(elevation),
+                        Math.sin(elevation),
+                        Math.max(Math.cos(hourAngle) * Math.cos(elevation), 0.25)];
+    rig.keyColor = kelvinToRGB(kelvin);
+    rig.keyIntensity = 0.15 + fade * 1.05;
+    rig.exposure = 0.68 + Math.max(0, Math.min((elevationDeg + 6) / 18, 1)) * 0.42;
+    rig.fillIntensity = elevationDeg > 0 ? 0.34 : 0.16;
+    rig.ambientIntensity = elevationDeg > 0 ? 0.55 : 0.30;
+    syncSliders();
+  }
+
+  function syncSliders() {
+    const set = (id, value) => {
+      const input = document.getElementById(id);
+      input.value = value;
+      input.dispatchEvent(new Event("input"));
+    };
+    set("keyIntensity", rig.keyIntensity);
+    set("keyKelvin", keyKelvin);
+    set("exposure", rig.exposure);
+    set("fillIntensity", rig.fillIntensity);
+    set("ambientIntensity", rig.ambientIntensity);
+  }
+
+  let activePreset = null;
+  document.querySelectorAll("[data-preset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      activePreset = button.dataset.preset;
+      document.querySelectorAll("[data-preset]").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b === button));
+      });
+      if (activePreset === "daylight") { applyDaylight(); return; }
+      const preset = PRESETS[activePreset];
+      rig.keyDirection = preset.dir.slice();
+      keyKelvin = preset.kelvin;
+      rig.keyColor = kelvinToRGB(preset.kelvin);
+      rig.keyIntensity = preset.intensity;
+      rig.exposure = preset.exposure;
+      syncSliders();
+    });
+  });
+
+  bind("hour", () => { if (activePreset === "daylight") applyDaylight(); },
+       (v) => `${String(Math.floor(v)).padStart(2, "0")}:${String(Math.round((v % 1) * 60)).padStart(2, "0")}`);
+  bind("latitude", () => { if (activePreset === "daylight") applyDaylight(); },
+       (v) => `${Math.abs(v).toFixed(0)}°${v >= 0 ? "N" : "S"}`);
+
+  document.querySelectorAll("[data-backdrop]").forEach((button) => {
+    button.addEventListener("click", () => {
+      backdrop = button.dataset.backdrop;
+      document.getElementById("stage").style.setProperty("--backdrop", BACKDROPS[backdrop].css);
+      document.querySelectorAll("[data-backdrop]").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b === button));
+      });
+    });
+  });
+
+  document.getElementById("copy").addEventListener("click", async (e) => {
+    const payload = JSON.stringify({ ...rig, ambientColor: effectiveAmbient() }, null, 2);
+    try {
+      await navigator.clipboard.writeText(payload);
+      e.target.textContent = "Copied";
+    } catch {
+      e.target.textContent = "Copy blocked — see console";
+      console.log(payload);
+    }
+    setTimeout(() => { e.target.textContent = "Copy rig as JSON"; }, 1400);
+  });
+
+  window.addEventListener("resize", resize);
+  resize();
+  requestAnimationFrame(frame);
+}
+
+start();
+</script>
