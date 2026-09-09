@@ -41,7 +41,11 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
+
+sys.path.insert(0, str(Path(__file__).parent))
 from scipy.ndimage import binary_dilation, distance_transform_edt, gaussian_filter
+
+from hair_spring import derive_strands
 
 
 # --- layer table -----------------------------------------------------------
@@ -62,16 +66,23 @@ class Layer:
     # How far this layer slides per unit of parallax input. Front hair moves
     # most, background hair least; this is what produces the depth cue.
     parallax: float
+    # Hair layers get strand chains and a per-pixel displacement field; the
+    # face and body stay rigid so features never wobble.
+    hair: bool = False
 
 
 LAYERS: tuple[Layer, ...] = (
-    Layer("hair_back", 1, base=0.20, relief=0.06, normal_strength=1.6, parallax=-0.35),
+    Layer("hair_back", 1, base=0.20, relief=0.06, normal_strength=1.6, parallax=-0.35, hair=True),
     Layer("body", 2, base=0.35, relief=0.10, normal_strength=1.2, parallax=0.15),
     Layer("face", 3, base=0.55, relief=0.22, normal_strength=2.4, parallax=0.55),
-    Layer("hair_front", 4, base=0.78, relief=0.08, normal_strength=2.0, parallax=1.00),
+    Layer("hair_front", 4, base=0.78, relief=0.08, normal_strength=2.0, parallax=1.00, hair=True),
 )
 
 LAYERS_BY_NAME = {layer.name: layer for layer in LAYERS}
+
+# Nodes per strand chain. Five is enough for a visible root-to-tip delay
+# without the solver cost mattering.
+STRAND_NODES = 5
 
 
 # --- map math --------------------------------------------------------------
@@ -263,6 +274,20 @@ def build_maps(
         "albedo": albedo,
     }
 
+    # Strand roots for the hair chains, derived from the masks so a new
+    # character needs no extra authoring step.
+    strands = []
+    for layer in LAYERS:
+        if not layer.hair:
+            continue
+        mask = masks.get(layer.name)
+        if mask is None or not mask.any():
+            continue
+        count = 6 if layer.name == "hair_front" else 5
+        strands.extend(
+            spec.to_json() for spec in derive_strands(mask, layer.name, count=count)
+        )
+
     meta = {
         "width": w,
         "height": h,
@@ -271,6 +296,8 @@ def build_maps(
         "layers": [asdict(layer) for layer in used],
         "reliefSource": "measured" if measured is not None else "mask-dome",
         "coverageChannels": [layer.name for layer in LAYERS],
+        "strands": strands,
+        "strandNodes": STRAND_NODES,
     }
     return encoded, meta
 

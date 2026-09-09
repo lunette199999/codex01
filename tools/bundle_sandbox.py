@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 MARKER = "const EMBEDDED_MAPS = null; /* __EMBEDDED_MAPS__ */"
+MANIFEST_MARKER = "const EMBEDDED_MANIFEST = null; /* __EMBEDDED_MANIFEST__ */"
 KINDS = ("albedo", "normal", "ao", "coverage")
 
 
@@ -46,6 +47,18 @@ def main(argv: list[str] | None = None) -> int:
         maps[kind] = data_uri(path)
 
     html = html.replace(MARKER, f"const EMBEDDED_MAPS = {json.dumps(maps)};")
+
+    manifest_path = args.maps / f"{args.name}.maps.json"
+    if not manifest_path.exists():
+        print(f"error: missing {manifest_path}", file=sys.stderr)
+        return 1
+    if MANIFEST_MARKER not in html:
+        print(f"error: manifest marker not found in {args.source}", file=sys.stderr)
+        return 1
+    html = html.replace(
+        MANIFEST_MARKER,
+        f"const EMBEDDED_MANIFEST = {manifest_path.read_text().strip()};",
+    )
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html, encoding="utf-8")

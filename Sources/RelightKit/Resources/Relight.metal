@@ -96,6 +96,64 @@ float3 shadeRelight(float3 albedo, float3 N, float ao, constant RelightUniforms 
     return lit * u.params.w;
 }
 
+// --- hair ------------------------------------------------------------------
+//
+// Chain node offsets arrive already solved (see HairSpring.swift) and are
+// blended here into a smooth per-pixel displacement. Evaluating the blend in
+// the shader rather than baking a displacement texture avoids a per-frame
+// upload; at a dozen strands it is a handful of instructions.
+
+constexpr constant int kMaxStrands = 12;
+constexpr constant int kMaxNodes = 6;
+
+struct HairUniforms {
+    float4 strand[kMaxStrands];                  // xy = root UV, z = tip V, w unused
+    float4 node[(kMaxStrands * kMaxNodes) / 2];  // two float2 offsets packed per float4
+    float4 params;                               // x count, y nodes, z sigma, w enabled
+};
+
+inline float2 strandNodeOffset(constant HairUniforms &hair, int strand, int node) {
+    const int flatIndex = strand * kMaxNodes + node;
+    const float4 packed = hair.node[flatIndex >> 1];
+    return (flatIndex & 1) == 0 ? packed.xy : packed.zw;
+}
+
+// Gaussian falloff in u so neighbouring strands overlap rather than each
+// dragging a hard column of pixels; linear interpolation down v between the
+// chain's nodes. Above a strand's root the offset is the root's own, which is
+// what keeps the hairline pinned to the head instead of sliding over it.
+float2 hairDisplacement(float2 uv, constant HairUniforms &hair) {
+    if (hair.params.w < 0.5f) {
+        return float2(0.0f);
+    }
+
+    const int strandCount = min(int(hair.params.x), kMaxStrands);
+    const int nodeCount = min(int(hair.params.y), kMaxNodes);
+    const float sigma = max(hair.params.z, 1e-4f);
+
+    float2 sum = float2(0.0f);
+    float weightSum = 0.0f;
+
+    for (int s = 0; s < strandCount; ++s) {
+        const float4 spec = hair.strand[s];
+
+        const float du = (uv.x - spec.x) / sigma;
+        const float weight = exp(-du * du);
+
+        const float span = max(spec.z - spec.y, 1e-5f);
+        const float t = clamp((uv.y - spec.y) / span, 0.0f, 1.0f) * float(nodeCount - 1);
+        const int lo = clamp(int(floor(t)), 0, nodeCount - 1);
+        const int hi = min(lo + 1, nodeCount - 1);
+
+        sum += weight * mix(strandNodeOffset(hair, s, lo),
+                            strandNodeOffset(hair, s, hi),
+                            t - float(lo));
+        weightSum += weight;
+    }
+
+    return sum / max(weightSum, 1e-5f);
+}
+
 // --- stages ---------------------------------------------------------------
 
 vertex VertexOut relightVertex(uint vid [[vertex_id]],
@@ -120,14 +178,21 @@ vertex VertexOut relightVertex(uint vid [[vertex_id]],
 
 fragment float4 relightFragment(VertexOut in [[stage_in]],
                                 constant RelightUniforms &u [[buffer(0)]],
+                                constant HairUniforms &hair [[buffer(1)]],
                                 texture2d<float> albedoTex   [[texture(0)]],
                                 texture2d<float> normalTex   [[texture(1)]],
                                 texture2d<float> aoTex       [[texture(2)]],
                                 texture2d<float> coverageTex [[texture(3)]],
                                 sampler samp [[sampler(0)]]) {
 
-    const float4 albedoSample = albedoTex.sample(samp, in.uv);
-    const float4 cov4 = coverageTex.sample(samp, in.uv);
+    // Sampling is the inverse of the motion: to move content by +d, read from
+    // -d. Coverage is fetched at the same shifted coordinate as everything
+    // else, so a strand carries its own silhouette with it rather than sliding
+    // out from under a stationary mask and tearing a hole at the edge.
+    const float2 uv = in.uv - hairDisplacement(in.uv, hair);
+
+    const float4 albedoSample = albedoTex.sample(samp, uv);
+    const float4 cov4 = coverageTex.sample(samp, uv);
 
     // One coverage channel per layer, packed by tools/portrait_maps.py in the
     // order reported as `coverageChannels` in the .maps.json sidecar.
@@ -143,8 +208,8 @@ fragment float4 relightFragment(VertexOut in [[stage_in]],
     }
 
     const float3 albedo = srgbToLinear(albedoSample.rgb);
-    const float3 N = normalize(normalTex.sample(samp, in.uv).xyz * 2.0f - 1.0f);
-    const float ao = aoTex.sample(samp, in.uv).r;
+    const float3 N = normalize(normalTex.sample(samp, uv).xyz * 2.0f - 1.0f);
+    const float ao = aoTex.sample(samp, uv).r;
 
     const float3 lit = linearToSrgb(shadeRelight(albedo, N, ao, u));
 

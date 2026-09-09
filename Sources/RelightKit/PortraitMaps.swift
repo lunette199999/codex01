@@ -24,11 +24,15 @@ public struct PortraitLayer: Equatable, Codable, Sendable {
     /// sidecar's `coverageChannels` at load time.
     public internal(set) var coverageSlot: Int = 0
 
+    /// Hair layers get strand chains and a per-pixel displacement field; the
+    /// face and body stay rigid so features never wobble.
+    public let hair: Bool
+
     /// Runtime fade, e.g. for dissolving a layer during an expression change.
     public var opacity: Float = 1.0
 
     private enum CodingKeys: String, CodingKey {
-        case name, index, base, relief, parallax
+        case name, index, base, relief, parallax, hair
         case normalStrength = "normal_strength"
     }
 }
@@ -41,6 +45,8 @@ public struct PortraitManifest: Codable, Sendable {
     public let coverageChannels: [String]
     public let reliefSource: String?
     public let source: String?
+    public let strands: [StrandSpec]?
+    public let strandNodes: Int?
 }
 
 public enum PortraitMapsError: Error, CustomStringConvertible {
@@ -71,6 +77,10 @@ public struct PortraitMaps {
     public let layers: [PortraitLayer]
     public let size: SIMD2<Int>
 
+    /// Strand roots grouped by the layer they belong to.
+    public let strands: [String: [StrandSpec]]
+    public let strandNodes: Int
+
     /// Loads a map set by basename, e.g. `load(name: "mannequin", in: assetsURL)`
     /// for `mannequin.albedo.png` and friends.
     ///
@@ -87,7 +97,7 @@ public struct PortraitMaps {
         guard let data = try? Data(contentsOf: manifestURL) else {
             throw PortraitMapsError.missingFile("\(name).maps.json")
         }
-        var manifest = try JSONDecoder().decode(PortraitManifest.self, from: data)
+        let manifest = try JSONDecoder().decode(PortraitManifest.self, from: data)
         guard !manifest.layers.isEmpty else { throw PortraitMapsError.emptyLayerTable }
 
         // Resolve each layer to its coverage channel.
@@ -119,13 +129,20 @@ public struct PortraitMaps {
             ])
         }
 
+        var strandsByLayer: [String: [StrandSpec]] = [:]
+        for spec in manifest.strands ?? [] {
+            strandsByLayer[spec.layer, default: []].append(spec)
+        }
+
         return PortraitMaps(
             albedo: try texture("albedo"),
             normal: try texture("normal"),
             ao: try texture("ao"),
             coverage: try texture("coverage"),
             layers: layers,
-            size: SIMD2(manifest.width, manifest.height)
+            size: SIMD2(manifest.width, manifest.height),
+            strands: strandsByLayer,
+            strandNodes: manifest.strandNodes ?? 5
         )
     }
 }

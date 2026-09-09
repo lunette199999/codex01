@@ -21,6 +21,7 @@ that drops straight into `LightRig`.
 | Layered parallax | Hair occludes and reveals the face instead of shearing as one sheet |
 | Environment response | Time-of-day sun, indoor presets, ambient picked up from the desktop behind the window |
 | Cavity AO | Contact darkening under the jaw, beside the nose, where hair meets face |
+| Per-strand hair | Verlet chains, so the ends trail and spring back instead of the layer sliding rigidly |
 
 ## Why layers instead of one depth map
 
@@ -49,7 +50,9 @@ parallax weights is the depth cue — the absolute numbers barely matter.
 ```
 tools/portrait_maps.py       offline: masks (+ optional measured depth) -> map set
 tools/relight_reference.py   the lighting model in numpy - canonical definition
-tools/test_portrait_maps.py  21 tests over the map maths and the model
+tools/hair_spring.py         strand chains + displacement field - canonical
+tools/render_preview.py      animated preview; reference for the layer path
+tools/test_portrait_maps.py  32 tests over the map maths, the model and the hair
 tools/bundle_sandbox.py      inlines maps into a standalone sandbox build
 
 Sources/RelightKit/
@@ -58,6 +61,7 @@ Sources/RelightKit/
   PortraitMaps.swift         map loading, layer table
   RelightRenderer.swift      Metal pipeline, one pass per layer
   EnvironmentLight.swift     solar position, colour temperature, ambient sampling
+  HairSpring.swift           Verlet strand chains
 
 web/sandbox.html             WebGL tuning bench (same model)
 assets/placeholder/          generated mannequin + its maps
@@ -75,6 +79,9 @@ python3 tools/portrait_maps.py assets/placeholder --synthetic --name mannequin
 
 # render a lit frame and a key-light sweep into validation/
 python3 tools/relight_reference.py assets/placeholder --name mannequin
+
+# animated preview: layered compositing + parallax + hair springs
+python3 tools/render_preview.py assets/placeholder --name mannequin
 
 python3 tools/test_portrait_maps.py
 swift test                      # macOS only

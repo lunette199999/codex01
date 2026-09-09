@@ -36,6 +36,18 @@ public final class RelightRenderer {
     /// effect can be dialled back without re-authoring the asset.
     public var parallaxScale: Float = 1.0
 
+    /// Gaussian width, in UV, over which one strand's motion blends into its
+    /// neighbours. Too narrow and each strand drags a visible column of pixels;
+    /// too wide and the whole layer moves as one again.
+    public var hairBlendSigma: Float = 0.16
+
+    /// One solver per hair layer, built by `prepare(maps:)`.
+    public private(set) var hairSolvers: [String: HairSolver] = [:]
+
+    private static let maxStrands = 12      // must match kMaxStrands in Relight.metal
+    private static let maxNodes = 6         // must match kMaxNodes
+    private static let hairSlotCount = maxStrands + (maxStrands * maxNodes) / 2 + 1
+
     public init(device: MTLDevice, pixelFormat: MTLPixelFormat = .bgra8Unorm) throws {
         let library = try Self.makeLibrary(device: device)
 
@@ -76,6 +88,72 @@ public final class RelightRenderer {
         self.sampler = sampler
     }
 
+    /// Builds the hair solvers for a character. Call once after loading maps.
+    public func prepare(maps: PortraitMaps, params: HairParams = HairParams()) {
+        hairSolvers = maps.strands.reduce(into: [:]) { result, entry in
+            let (layer, specs) = entry
+            guard !specs.isEmpty else { return }
+            result[layer] = HairSolver(
+                strands: Array(specs.prefix(Self.maxStrands)),
+                nodeCount: min(maps.strandNodes, Self.maxNodes),
+                params: params
+            )
+        }
+    }
+
+    /// Advances every hair chain. `headOffset` is the head's motion in UV -
+    /// feed it the same signal that drives parallax so the hair follows the
+    /// head rather than drifting independently of it.
+    public func advanceHair(delta: Float, headOffset: SIMD2<Float>) {
+        for solver in hairSolvers.values {
+            solver.step(delta: delta, headOffset: headOffset)
+        }
+    }
+
+    /// Packs one layer's strand state for the shader.
+    ///
+    /// Laid out to match `HairUniforms` in Relight.metal: the strand table,
+    /// then node offsets packed two per float4, then the parameter word. A
+    /// layer with no solver returns an all-zero block, whose `params.w` of 0
+    /// disables displacement entirely - which is what keeps the face rigid.
+    private func hairUniforms(for layer: PortraitLayer) -> [SIMD4<Float>] {
+        var slots = [SIMD4<Float>](repeating: .zero, count: Self.hairSlotCount)
+
+        guard layer.hair,
+              let solver = hairSolvers[layer.name],
+              !solver.strands.isEmpty
+        else { return slots }
+
+        let strandCount = min(solver.strands.count, Self.maxStrands)
+        let nodeCount = min(solver.nodeCount, Self.maxNodes)
+        let offsets = solver.offsets()
+
+        for s in 0..<strandCount {
+            let spec = solver.strands[s]
+            slots[s] = SIMD4(spec.rootU, spec.rootV, spec.tipV, 0)
+        }
+
+        for s in 0..<strandCount {
+            for k in 0..<nodeCount {
+                let flat = s * Self.maxNodes + k
+                let slot = Self.maxStrands + flat / 2
+                let offset = offsets[s * solver.nodeCount + k]
+                if flat % 2 == 0 {
+                    slots[slot].x = offset.x
+                    slots[slot].y = offset.y
+                } else {
+                    slots[slot].z = offset.x
+                    slots[slot].w = offset.y
+                }
+            }
+        }
+
+        slots[Self.hairSlotCount - 1] = SIMD4(
+            Float(strandCount), Float(nodeCount), hairBlendSigma, 1
+        )
+        return slots
+    }
+
     /// Encodes every layer into an existing pass.
     ///
     /// Layers are drawn back to front with blending on rather than sorted by a
@@ -99,6 +177,14 @@ public final class RelightRenderer {
             )
             encoder.setVertexBytes(&uniforms, length: stride, index: 0)
             encoder.setFragmentBytes(&uniforms, length: stride, index: 0)
+
+            var hair = hairUniforms(for: layer)
+            encoder.setFragmentBytes(
+                &hair,
+                length: MemoryLayout<SIMD4<Float>>.stride * hair.count,
+                index: 1
+            )
+
             encoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         }
     }

@@ -147,3 +147,104 @@ private extension PortraitLayer {
                       relief: 0.22, normalStrength: 2.4, parallax: 0.55)
     }
 }
+
+final class HairSolverTests: XCTestCase {
+
+    private var specs: [StrandSpec] {
+        [
+            StrandSpec(rootU: 0.30, rootV: 0.15, tipV: 0.60, layer: "hair_front"),
+            StrandSpec(rootU: 0.70, rootV: 0.15, tipV: 0.60, layer: "hair_front"),
+        ]
+    }
+
+    @discardableResult
+    private func sway(_ solver: HairSolver, seconds: Float = 2.0,
+                      fps: Float = 120, swayUntil: Float = 1.4) -> [[SIMD2<Float>]] {
+        let dt = 1 / fps
+        var trace: [[SIMD2<Float>]] = []
+        for i in 0..<Int(seconds * fps) {
+            let t = Float(i) * dt
+            let offset = t < swayUntil ? sin(t * 4.2) * 0.02 : 0
+            solver.step(delta: dt, headOffset: SIMD2(offset, 0))
+            trace.append(solver.offsets())
+        }
+        return trace
+    }
+
+    /// Regression: with a soft spring along the segment axis the segment
+    /// stretches and swallows the motion, so the tip never moves - the ends go
+    /// dead exactly where hair should be liveliest.
+    func testMotionReachesTheTip() {
+        let solver = HairSolver(strands: specs, nodeCount: 5)
+        let trace = sway(solver)
+
+        let root = trace.map { abs($0[0].x) }.max() ?? 0
+        let tip = trace.map { abs($0[4].x) }.max() ?? 0
+        XCTAssertGreaterThan(tip, root, "motion is not propagating down the chain")
+        XCTAssertGreaterThan(tip / max(root, 1e-9), 1.5, "tip should overshoot the root")
+    }
+
+    func testChainReturnsToRest() {
+        let solver = HairSolver(strands: specs, nodeCount: 5)
+        sway(solver, seconds: 8.0)
+        let settled = solver.offsets().map { simd_length($0) }.max() ?? 0
+        XCTAssertLessThan(settled, 2e-3)
+    }
+
+    /// The length constraint is solved last, so the pose leaving the solver must
+    /// satisfy it exactly.
+    func testSegmentLengthsArePreserved() {
+        let solver = HairSolver(strands: specs, nodeCount: 5)
+        sway(solver, seconds: 1.5)
+
+        let offsets = solver.offsets()
+        // Rebuild absolute positions from rest + offset to measure segments.
+        for s in 0..<specs.count {
+            let span = specs[s].tipV - specs[s].rootV
+            let restLength = span / 4
+            for k in 1..<5 {
+                let a = SIMD2(specs[s].rootU, specs[s].rootV + span * Float(k - 1) / 4)
+                    + offsets[s * 5 + k - 1]
+                let b = SIMD2(specs[s].rootU, specs[s].rootV + span * Float(k) / 4)
+                    + offsets[s * 5 + k]
+                XCTAssertEqual(simd_distance(a, b), restLength, accuracy: restLength * 0.05)
+            }
+        }
+    }
+
+    /// Fixed 120 Hz substeps. Compared at the settled steady state: a frame rate
+    /// that does not divide the substep rate evenly simulates a few milliseconds
+    /// more or less over a given span, so sampling a still-ringing chain catches
+    /// different phases and says nothing about the solver.
+    func testMotionIsFrameRateIndependent() {
+        var results: [SIMD2<Float>] = []
+        for fps in [Float(24), 30, 60, 120] {
+            let solver = HairSolver(strands: specs, nodeCount: 5)
+            let dt = 1 / fps
+            for _ in 0..<Int(6.0 * fps) {
+                solver.step(delta: dt, headOffset: SIMD2(0.02, 0))
+            }
+            results.append(solver.offsets()[4])
+        }
+        for other in results.dropFirst() {
+            XCTAssertEqual(simd_distance(results[0], other), 0, accuracy: 1e-5)
+        }
+    }
+
+    func testOffsetsAreClamped() {
+        var params = HairParams()
+        params.maxOffset = 0.02
+        let solver = HairSolver(strands: specs, nodeCount: 5, params: params)
+        for _ in 0..<200 {
+            solver.step(delta: 1.0 / 120, headOffset: SIMD2(0.5, 0.5))
+        }
+        let peak = solver.offsets().map { simd_length($0) }.max() ?? 0
+        XCTAssertLessThanOrEqual(peak, params.maxOffset * 1.01)
+    }
+
+    func testEmptyStrandListIsHarmless() {
+        let solver = HairSolver(strands: [], nodeCount: 5)
+        solver.step(delta: 1.0 / 60, headOffset: SIMD2(0.01, 0))
+        XCTAssertTrue(solver.offsets().isEmpty)
+    }
+}

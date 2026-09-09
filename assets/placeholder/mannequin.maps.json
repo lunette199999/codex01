@@ -13,7 +13,8 @@
       "base": 0.2,
       "relief": 0.06,
       "normal_strength": 1.6,
-      "parallax": -0.35
+      "parallax": -0.35,
+      "hair": true
     },
     {
       "name": "body",
@@ -21,7 +22,8 @@
       "base": 0.35,
       "relief": 0.1,
       "normal_strength": 1.2,
-      "parallax": 0.15
+      "parallax": 0.15,
+      "hair": false
     },
     {
       "name": "face",
@@ -29,7 +31,8 @@
       "base": 0.55,
       "relief": 0.22,
       "normal_strength": 2.4,
-      "parallax": 0.55
+      "parallax": 0.55,
+      "hair": false
     },
     {
       "name": "hair_front",
@@ -37,7 +40,8 @@
       "base": 0.78,
       "relief": 0.08,
       "normal_strength": 2.0,
-      "parallax": 1.0
+      "parallax": 1.0,
+      "hair": true
     }
   ],
   "reliefSource": "mask-dome",
@@ -47,5 +51,68 @@
     "face",
     "hair_front"
   ],
+  "strands": [
+    {
+      "rootU": 0.26171875,
+      "rootV": 0.240234375,
+      "tipV": 0.650390625,
+      "layer": "hair_back"
+    },
+    {
+      "rootU": 0.3802083333333333,
+      "rootV": 0.150390625,
+      "tipV": 0.6923828125,
+      "layer": "hair_back"
+    },
+    {
+      "rootU": 0.6197916666666666,
+      "rootV": 0.150390625,
+      "tipV": 0.6923828125,
+      "layer": "hair_back"
+    },
+    {
+      "rootU": 0.73828125,
+      "rootV": 0.240234375,
+      "tipV": 0.650390625,
+      "layer": "hair_back"
+    },
+    {
+      "rootU": 0.296875,
+      "rootV": 0.20703125,
+      "tipV": 0.642578125,
+      "layer": "hair_front"
+    },
+    {
+      "rootU": 0.3776041666666667,
+      "rootV": 0.1669921875,
+      "tipV": 0.3701171875,
+      "layer": "hair_front"
+    },
+    {
+      "rootU": 0.4596354166666667,
+      "rootV": 0.1484375,
+      "tipV": 0.388671875,
+      "layer": "hair_front"
+    },
+    {
+      "rootU": 0.5403645833333334,
+      "rootV": 0.1484375,
+      "tipV": 0.388671875,
+      "layer": "hair_front"
+    },
+    {
+      "rootU": 0.6223958333333334,
+      "rootV": 0.1669921875,
+      "tipV": 0.3701171875,
+      "layer": "hair_front"
+    },
+    {
+      "rootU": 0.703125,
+      "rootV": 0.20703125,
+      "tipV": 0.642578125,
+      "layer": "hair_front"
+    }
+  ],
+  "strandNodes": 5,
   "source": "synthetic-placeholder"
 }

@@ -291,6 +291,18 @@ input[type="range"]:focus-visible { outline: 2px solid var(--key); outline-offse
       <div class="row"><label for="specGloss">specGloss</label><output id="specGloss-v"></output><input type="range" id="specGloss" min="4" max="120" step="1" value="28"></div>
     </div>
 
+    <div class="group" style="--swatch: #7A6248">
+      <h2>Hair</h2>
+      <div class="row"><label for="hairBend">bend</label><output id="hairBend-v"></output><input type="range" id="hairBend" min="0.005" max="0.09" step="0.001" value="0.0278"></div>
+      <div class="row"><label for="hairDecay">bendDecay</label><output id="hairDecay-v"></output><input type="range" id="hairDecay" min="0.4" max="0.95" step="0.005" value="0.707"></div>
+      <div class="row"><label for="hairSigma">blendSigma</label><output id="hairSigma-v"></output><input type="range" id="hairSigma" min="0.05" max="0.40" step="0.005" value="0.16"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:9px">
+        <label class="toggle"><input type="checkbox" id="hairOn" checked> springs</label>
+        <span style="flex:1"></span>
+        <button id="nudge" style="background:var(--panel-high);border:1px solid var(--line);color:var(--text);font-family:var(--font-ui);font-size:11.5px;padding:5px 11px;border-radius:3px;cursor:pointer">Nudge</button>
+      </div>
+    </div>
+
     <div class="group" style="--swatch: #4E5A6B">
       <h2>Scene</h2>
       <div class="row"><label for="ambientIntensity">ambientIntensity</label><output id="ambientIntensity-v"></output><input type="range" id="ambientIntensity" min="0" max="1.5" step="0.01" value="0.55"></div>
@@ -330,15 +342,17 @@ const EMBEDDED_MAPS = null; /* __EMBEDDED_MAPS__ */
 const MAP_BASE = "../assets/placeholder/mannequin.";
 const MAP_KINDS = ["albedo", "normal", "ao", "coverage"];
 const mapURL = (kind) => (EMBEDDED_MAPS ? EMBEDDED_MAPS[kind] : MAP_BASE + kind + ".png");
+const EMBEDDED_MANIFEST = null; /* __EMBEDDED_MANIFEST__ */
 
-// Layer table. Mirrors LAYERS in tools/portrait_maps.py; the `slot` is the
-// coverage channel and the order here is the draw order, back to front.
-const LAYERS = [
-  { name: "hair_back",  slot: 0, parallax: -0.35 },
-  { name: "body",       slot: 1, parallax:  0.15 },
-  { name: "face",       slot: 2, parallax:  0.55 },
-  { name: "hair_front", slot: 3, parallax:  1.00 },
-];
+// Must match kMaxStrands / kMaxNodes in Relight.metal.
+const MAX_STRANDS = 12;
+const MAX_NODES = 6;
+
+// Filled from the .maps.json sidecar so the bench and the runtime read the same
+// layer table rather than two copies that can drift apart.
+let LAYERS = [];
+let STRANDS_BY_LAYER = {};
+let STRAND_NODES = 5;
 
 const IMAGE_ASPECT = 768 / 1024;
 
@@ -418,15 +432,69 @@ void main() {
   vUV = vec2((aPos.x + 1.0) * 0.5, 1.0 - (aPos.y + 1.0) * 0.5);
 }`;
 
+const HAIR_GLSL = `
+uniform vec4 uStrand[${MAX_STRANDS}];
+uniform vec4 uNode[${(MAX_STRANDS * MAX_NODES) / 2}];
+uniform vec4 uHairParams;   // x count, y nodes, z sigma, w enabled
+
+vec2 strandNodeOffset(int strand, int node) {
+  // Not named 'flat': that is a reserved interpolation qualifier in GLSL ES 3.00.
+  int flatIndex = strand * ${MAX_NODES} + node;
+  vec4 packed = uNode[flatIndex / 2];
+  return (flatIndex - (flatIndex / 2) * 2) == 0 ? packed.xy : packed.zw;
+}
+
+// Gaussian falloff in u so neighbouring strands overlap rather than each
+// dragging a hard column of pixels; linear interpolation down v between the
+// chain's nodes. Above a strand's root the offset is the root's own, which is
+// what pins the hairline to the head instead of letting it slide over it.
+vec2 hairDisplacement(vec2 uv) {
+  if (uHairParams.w < 0.5) return vec2(0.0);
+
+  int strandCount = int(uHairParams.x);
+  int nodeCount = int(uHairParams.y);
+  float sigma = max(uHairParams.z, 1e-4);
+
+  vec2 sum = vec2(0.0);
+  float weightSum = 0.0;
+
+  for (int s = 0; s < ${MAX_STRANDS}; ++s) {
+    if (s >= strandCount) break;
+    vec4 spec = uStrand[s];
+
+    float du = (uv.x - spec.x) / sigma;
+    float weight = exp(-du * du);
+
+    float span = max(spec.z - spec.y, 1e-5);
+    float t = clamp((uv.y - spec.y) / span, 0.0, 1.0) * float(nodeCount - 1);
+    int lo = int(floor(t));
+    lo = clamp(lo, 0, nodeCount - 1);
+    int hi = min(lo + 1, nodeCount - 1);
+
+    sum += weight * mix(strandNodeOffset(s, lo), strandNodeOffset(s, hi), t - float(lo));
+    weightSum += weight;
+  }
+
+  return sum / max(weightSum, 1e-5);
+}
+`;
+
 const LAYER_FRAG = `#version 300 es
 ${SHADE_GLSL}
+${HAIR_GLSL}
 in vec2 vUV;
 out vec4 fragColor;
 uniform sampler2D uAlbedo, uNormal, uAO, uCoverage;
 uniform float uSlot;
 void main() {
-  vec4 albedoSample = texture(uAlbedo, vUV);
-  vec4 cov4 = texture(uCoverage, vUV);
+  // Sampling is the inverse of the motion: to move content by +d, read from -d.
+  // Coverage is fetched at the same shifted coordinate as everything else, so a
+  // strand carries its own silhouette rather than sliding out from under a
+  // stationary mask and tearing a hole at the edge.
+  vec2 uv = vUV - hairDisplacement(vUV);
+
+  vec4 albedoSample = texture(uAlbedo, uv);
+  vec4 cov4 = texture(uCoverage, uv);
 
   int slot = int(uSlot + 0.5);
   float coverage = slot == 0 ? cov4.r : slot == 1 ? cov4.g : slot == 2 ? cov4.b : cov4.a;
@@ -434,8 +502,8 @@ void main() {
   if (coverage <= 0.001) discard;
 
   vec3 albedo = srgbToLinear(albedoSample.rgb);
-  vec3 N = normalize(texture(uNormal, vUV).xyz * 2.0 - 1.0);
-  float ao = texture(uAO, vUV).r;
+  vec3 N = normalize(texture(uNormal, uv).xyz * 2.0 - 1.0);
+  float ao = texture(uAO, uv).r;
 
   fragColor = vec4(linearToSrgb(shadeRelight(albedo, N, ao)) * coverage, coverage);
 }`;
@@ -457,6 +525,178 @@ void main() {
   float edge = smoothstep(1.0, 0.985, r2);
   fragColor = vec4(linearToSrgb(lit) * edge, edge);
 }`;
+
+// --- hair chains -----------------------------------------------------------
+// Port of HairSolver in tools/hair_spring.py. See that file for why the
+// constraints are ordered bend-then-length.
+
+const SUBSTEP_HZ = 120;
+
+class HairChain {
+  constructor(strands, nodeCount) {
+    this.strands = strands.slice(0, MAX_STRANDS);
+    this.nodeCount = Math.min(nodeCount, MAX_NODES);
+    this.params = {
+      gravity: 0.42, damping: 0.010,
+      bend: 0.0278, bendDecay: 0.707,
+      iterations: 2, rootFollow: 0.85, maxOffset: 0.075,
+    };
+
+    const total = this.strands.length * this.nodeCount;
+    this.rest = new Float32Array(total * 2);
+    for (let s = 0; s < this.strands.length; s++) {
+      const strand = this.strands[s];
+      const span = strand.tipV - strand.rootV;
+      for (let k = 0; k < this.nodeCount; k++) {
+        const i = (s * this.nodeCount + k) * 2;
+        this.rest[i] = strand.rootU;
+        this.rest[i + 1] = strand.rootV + span * (k / (this.nodeCount - 1));
+      }
+    }
+    this.position = this.rest.slice();
+    this.previous = this.rest.slice();
+
+    this.restLength = new Float32Array(this.strands.length * (this.nodeCount - 1));
+    for (let s = 0; s < this.strands.length; s++) {
+      for (let k = 1; k < this.nodeCount; k++) {
+        const a = (s * this.nodeCount + k - 1) * 2;
+        const b = (s * this.nodeCount + k) * 2;
+        this.restLength[s * (this.nodeCount - 1) + k - 1] =
+          Math.hypot(this.position[b] - this.position[a], this.position[b + 1] - this.position[a + 1]);
+      }
+    }
+
+    this.nodeBend = new Float32Array(this.nodeCount);
+    this.accumulator = 0;
+    this.retune();
+  }
+
+  retune() {
+    for (let k = 0; k < this.nodeCount; k++) {
+      this.nodeBend[k] = this.params.bend * Math.pow(this.params.bendDecay, k);
+    }
+  }
+
+  nudge(amount) {
+    // Kick every node sideways so the spring-back is visible on demand.
+    for (let s = 0; s < this.strands.length; s++) {
+      for (let k = 1; k < this.nodeCount; k++) {
+        this.previous[(s * this.nodeCount + k) * 2] += amount;
+      }
+    }
+  }
+
+  step(delta, headX, headY) {
+    this.accumulator += Math.max(delta, 0);
+    const dt = 1 / SUBSTEP_HZ;
+    let steps = 0;
+    while (this.accumulator >= dt && steps < 16) {
+      this.substep(dt, headX, headY);
+      this.accumulator -= dt;
+      steps++;
+    }
+    if (steps === 16) this.accumulator = 0;
+  }
+
+  substep(dt, headX, headY) {
+    const p = this.params;
+    const N = this.nodeCount;
+    const gravityStep = p.gravity * dt * dt;
+
+    for (let i = 0; i < this.position.length; i += 2) {
+      const vx = (this.position[i] - this.previous[i]) * (1 - p.damping);
+      const vy = (this.position[i + 1] - this.previous[i + 1]) * (1 - p.damping);
+      this.previous[i] = this.position[i];
+      this.previous[i + 1] = this.position[i + 1];
+      this.position[i] += vx;
+      this.position[i + 1] += vy + gravityStep;
+    }
+
+    for (let s = 0; s < this.strands.length; s++) {
+      const i = s * N * 2;
+      this.position[i] = this.rest[i] + headX * p.rootFollow;
+      this.position[i + 1] = this.rest[i + 1] + headY * p.rootFollow;
+    }
+
+    for (let iter = 0; iter < p.iterations; iter++) {
+      for (let s = 0; s < this.strands.length; s++) {
+        for (let k = 1; k < N; k++) {
+          const parent = (s * N + k - 1) * 2;
+          const self = (s * N + k) * 2;
+          const rest = this.restLength[s * (N - 1) + k - 1];
+          const bend = this.nodeBend[k];
+          this.position[self] += (this.position[parent] - this.position[self]) * bend;
+          this.position[self + 1] +=
+            (this.position[parent + 1] + rest - this.position[self + 1]) * bend;
+        }
+      }
+      for (let s = 0; s < this.strands.length; s++) {
+        for (let k = 1; k < N; k++) {
+          const parent = (s * N + k - 1) * 2;
+          const self = (s * N + k) * 2;
+          const dx = this.position[self] - this.position[parent];
+          const dy = this.position[self + 1] - this.position[parent + 1];
+          const distance = Math.hypot(dx, dy);
+          if (distance < 1e-9) continue;
+          const scale = 1 - this.restLength[s * (N - 1) + k - 1] / distance;
+          this.position[self] -= dx * scale;
+          this.position[self + 1] -= dy * scale;
+        }
+      }
+    }
+
+    for (let i = 0; i < this.position.length; i += 2) {
+      const dx = this.position[i] - this.rest[i];
+      const dy = this.position[i + 1] - this.rest[i + 1];
+      const magnitude = Math.hypot(dx, dy);
+      if (magnitude > p.maxOffset) {
+        const k = p.maxOffset / magnitude;
+        this.position[i] = this.rest[i] + dx * k;
+        this.position[i + 1] = this.rest[i + 1] + dy * k;
+        this.previous[i] = this.position[i];
+        this.previous[i + 1] = this.position[i + 1];
+      }
+    }
+  }
+}
+
+const solvers = {};
+let hairSigma = 0.16;
+let hairEnabled = true;
+
+const strandScratch = new Float32Array(MAX_STRANDS * 4);
+const nodeScratch = new Float32Array((MAX_STRANDS * MAX_NODES) / 2 * 4);
+
+function setHairUniforms(gl, program, layerName) {
+  const u = (n) => gl.getUniformLocation(program, n);
+  const solver = hairEnabled ? solvers[layerName] : null;
+
+  if (!solver) {
+    gl.uniform4f(u("uHairParams"), 0, 0, hairSigma, 0);
+    return;
+  }
+
+  strandScratch.fill(0);
+  nodeScratch.fill(0);
+
+  const N = solver.nodeCount;
+  for (let s = 0; s < solver.strands.length; s++) {
+    strandScratch[s * 4] = solver.strands[s].rootU;
+    strandScratch[s * 4 + 1] = solver.strands[s].rootV;
+    strandScratch[s * 4 + 2] = solver.strands[s].tipV;
+    for (let k = 0; k < N; k++) {
+      const flat = s * MAX_NODES + k;
+      const slot = (flat >> 1) * 4 + (flat & 1 ? 2 : 0);
+      const i = (s * N + k) * 2;
+      nodeScratch[slot] = solver.position[i] - solver.rest[i];
+      nodeScratch[slot + 1] = solver.position[i + 1] - solver.rest[i + 1];
+    }
+  }
+
+  gl.uniform4fv(u("uStrand"), strandScratch);
+  gl.uniform4fv(u("uNode"), nodeScratch);
+  gl.uniform4f(u("uHairParams"), solver.strands.length, N, hairSigma, 1);
+}
 
 // --- rig state -------------------------------------------------------------
 
@@ -581,15 +821,40 @@ async function start() {
   const ballGL = ballCanvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: true });
   if (!gl || !ballGL) return fail("WebGL2 is not available in this browser.");
 
-  let images;
+  let images, manifest;
   try {
     images = await Promise.all(MAP_KINDS.map((kind) => loadImage(mapURL(kind))));
+    manifest = EMBEDDED_MANIFEST
+      ? EMBEDDED_MANIFEST
+      : await (await fetch(MAP_BASE + "maps.json")).json();
   } catch (err) {
     return fail(
       `${err.message}<br><br>Serve the repo over HTTP so the maps resolve, e.g. ` +
       `<span style="font-family:var(--font-num)">python3 -m http.server</span> from the project root, ` +
       `then open <span style="font-family:var(--font-num)">/web/sandbox.html</span>.`
     );
+  }
+
+  // Layer table and strands come from the sidecar, so the bench and the
+  // runtime never drift apart.
+  LAYERS = manifest.layers
+    .slice()
+    .sort((a, b) => a.index - b.index)
+    .map((l) => ({
+      name: l.name,
+      slot: manifest.coverageChannels.indexOf(l.name),
+      parallax: l.parallax,
+      hair: !!l.hair,
+    }));
+  STRAND_NODES = manifest.strandNodes || 5;
+  STRANDS_BY_LAYER = {};
+  for (const strand of manifest.strands || []) {
+    (STRANDS_BY_LAYER[strand.layer] ||= []).push(strand);
+  }
+  for (const layer of LAYERS) {
+    if (layer.hair && STRANDS_BY_LAYER[layer.name]) {
+      solvers[layer.name] = new HairChain(STRANDS_BY_LAYER[layer.name], STRAND_NODES);
+    }
   }
 
   let layerProgram, ballProgram;
@@ -619,7 +884,8 @@ async function start() {
   ballGL.enable(ballGL.BLEND);
   ballGL.blendFunc(ballGL.ONE, ballGL.ONE_MINUS_SRC_ALPHA);
 
-  status.textContent = "ready";
+  const strandTotal = Object.values(solvers).reduce((n, s) => n + s.strands.length, 0);
+  status.textContent = `${LAYERS.length} layers, ${strandTotal} strands`;
 
   let idleTime = 0;
   let pointer = { x: 0, y: 0 };
@@ -666,9 +932,16 @@ async function start() {
     gl.uniform2f(gl.getUniformLocation(layerProgram, "uFit"), fit[0], fit[1]);
     gl.uniform2f(gl.getUniformLocation(layerProgram, "uParallax"), px, py);
 
+    // Hair follows the same signal that drives parallax, so it moves with the
+    // head rather than drifting on its own.
+    for (const solver of Object.values(solvers)) {
+      solver.step(delta, px, py);
+    }
+
     for (const layer of LAYERS) {
       gl.uniform2f(gl.getUniformLocation(layerProgram, "uLayer"), layer.parallax, parallaxScale);
       gl.uniform1f(gl.getUniformLocation(layerProgram, "uSlot"), layer.slot);
+      setHairUniforms(gl, layerProgram, layer.name);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -680,6 +953,7 @@ async function start() {
     ballGL.uniform2f(ballGL.getUniformLocation(ballProgram, "uFit"), 1, 1);
     ballGL.uniform2f(ballGL.getUniformLocation(ballProgram, "uParallax"), 0, 0);
     ballGL.uniform2f(ballGL.getUniformLocation(ballProgram, "uLayer"), 0, 0);
+    ballGL.uniform4f(ballGL.getUniformLocation(ballProgram, "uHairParams"), 0, 0, 0, 0);
     ballGL.drawArrays(ballGL.TRIANGLE_STRIP, 0, 4);
 
     requestAnimationFrame(frame);
@@ -739,6 +1013,23 @@ async function start() {
 
   document.getElementById("idle").addEventListener("change", (e) => {
     idleEnabled = e.target.checked;
+  });
+
+  const retuneHair = (key, value) => {
+    for (const solver of Object.values(solvers)) {
+      solver.params[key] = value;
+      solver.retune();
+    }
+  };
+  bind("hairBend", (v) => retuneHair("bend", v), (v) => v.toFixed(4));
+  bind("hairDecay", (v) => retuneHair("bendDecay", v), (v) => v.toFixed(3));
+  bind("hairSigma", (v) => { hairSigma = v; }, (v) => v.toFixed(3));
+
+  document.getElementById("hairOn").addEventListener("change", (e) => {
+    hairEnabled = e.target.checked;
+  });
+  document.getElementById("nudge").addEventListener("click", () => {
+    for (const solver of Object.values(solvers)) solver.nudge(0.014);
   });
 
   // Environment presets, mirroring IndoorPreset in EnvironmentLight.swift.
