@@ -428,6 +428,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("out_dir", type=Path, help="directory to write the map set into")
     parser.add_argument("--name", default="portrait", help="basename for the map files")
     parser.add_argument("--synthetic", action="store_true", help="generate the placeholder mannequin")
+    parser.add_argument(
+        "--save-masks",
+        action="store_true",
+        help="also write the per-layer masks, as the reference for authoring a new character",
+    )
     parser.add_argument("--albedo", type=Path, help="RGBA albedo for a real asset")
     parser.add_argument(
         "--depth",
@@ -493,6 +498,16 @@ def main(argv: list[str] | None = None) -> int:
 
         images, meta = build_maps(albedo, masks, measured)
         meta["source"] = str(args.albedo)
+
+    if args.save_masks:
+        for layer in LAYERS:
+            mask = masks.get(layer.name)
+            if mask is None:
+                continue
+            args.out_dir.mkdir(parents=True, exist_ok=True)
+            Image.fromarray((np.clip(mask, 0, 1) * 255).astype(np.uint8), "L").save(
+                args.out_dir / f"{args.name}.mask.{layer.name}.png"
+            )
 
     write_maps(args.out_dir, args.name, images, meta)
     print(f"wrote {len(images) + 1} files to {args.out_dir}/ ({meta['width']}x{meta['height']})")

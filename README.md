@@ -8,9 +8,15 @@ Character-agnostic by design: nothing in here knows or cares who is in the
 texture. A neutral placeholder mannequin ships with it so the whole pipeline
 runs end to end before any character exists.
 
+**Read [STATUS.md](STATUS.md) first** for what has actually been run, what has
+never been compiled, and the ownership split with the native app.
+
 **Tune it in the browser:** [Relight Bench](https://claude.ai/code/artifact/1cd05591-96c4-401b-a009-00af37f6178e)
 runs the same lighting model in WebGL, with live controls and a JSON export
 that drops straight into `LightRig`.
+
+> The hair chains are an **alternative implementation**, not a replacement for
+> the desktop app's existing `Motion.swift` springs. See STATUS.md §5.
 
 ## What it does
 

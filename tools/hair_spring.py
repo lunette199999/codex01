@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 """Per-strand hair chains, and the displacement field they drive.
 
+STATUS: ALTERNATIVE IMPLEMENTATION - NOT A REPLACEMENT.
+
+The shipping app's hair motion lives in its own Motion.swift (three spring
+segments per side, force-based, driving a local 2D image warp). That remains
+the active implementation. This is a second approach offered for comparison,
+wired into RelightKit's renderer only; nothing here is called from the existing
+app. See STATUS.md for what has and has not been verified.
+
 The layer renderer moves each depth band as a rigid quad. That reads as
 cardboard: hair with real weight does not translate, it lags at the root and
 swings at the tip, and neighbouring strands do not move in lockstep.

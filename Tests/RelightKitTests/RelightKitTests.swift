@@ -1,5 +1,6 @@
 import XCTest
 import simd
+import Metal
 @testable import RelightKit
 
 final class UniformLayoutTests: XCTestCase {
@@ -246,5 +247,58 @@ final class HairSolverTests: XCTestCase {
         let solver = HairSolver(strands: [], nodeCount: 5)
         solver.step(delta: 1.0 / 60, headOffset: SIMD2(0.01, 0))
         XCTAssertTrue(solver.offsets().isEmpty)
+    }
+}
+
+
+/// The character must read as front-facing with the head and neck upright.
+/// These pin the two structural properties that guarantee it.
+final class FrontFacingInvariantTests: XCTestCase {
+
+    private func layer(_ name: String, index: Int, hair: Bool) -> PortraitLayer {
+        PortraitLayer(name: name, index: index, base: 0.5, relief: 0.1,
+                      normalStrength: 2.0, parallax: 0.5, hair: hair)
+    }
+
+    /// Only hair moves. The face and body cannot be deformed by the strand
+    /// system under any parameter values, because a non-hair layer's uniform
+    /// block is all zeros and a zero `params.w` disables displacement in the
+    /// shader.
+    func testNonHairLayersReceiveNoDisplacement() throws {
+        let device = try XCTUnwrap(MTLCreateSystemDefaultDevice(),
+                                   "no Metal device; skipping")
+        let renderer = try RelightRenderer(device: device)
+
+        let strands = [StrandSpec(rootU: 0.5, rootV: 0.2, tipV: 0.7, layer: "face")]
+        renderer.hairSolvers["face"] = HairSolver(strands: strands, nodeCount: 5)
+        renderer.hairSolvers["face"]?.step(delta: 0.5, headOffset: SIMD2(0.05, 0))
+
+        // Even with a solver deliberately registered under its name, a layer
+        // flagged non-hair must come back disabled.
+        let face = renderer.hairUniforms(for: layer("face", index: 3, hair: false))
+        XCTAssertEqual(face.last?.w, 0, "face layer is receiving hair displacement")
+        XCTAssertTrue(face.allSatisfy { $0 == .zero })
+
+        let hair = renderer.hairUniforms(for: layer("hair_front", index: 4, hair: true))
+        XCTAssertEqual(hair.last?.w, 0, "no solver registered for hair_front, expected disabled")
+    }
+
+    /// The pipeline is translation-only. Parallax offsets a layer's quad; the
+    /// hair field offsets sample coordinates. Neither carries a rotation term,
+    /// so no combination of settings can tilt the head - the constraint holds
+    /// structurally rather than by tuning.
+    func testParallaxIsTranslationOnly() {
+        let rig = LightRig()
+        let uniforms = rig.uniforms(
+            for: layer("face", index: 3, hair: false),
+            parallax: SIMD2(0.03, -0.02),
+            parallaxScale: 2.0
+        )
+        // The parallax lane carries exactly the two translation components and
+        // nothing else; there is no angle anywhere in the uniform block.
+        XCTAssertEqual(uniforms.parallax.x, 0.03, accuracy: 1e-6)
+        XCTAssertEqual(uniforms.parallax.y, -0.02, accuracy: 1e-6)
+        XCTAssertEqual(uniforms.parallax.z, 0)
+        XCTAssertEqual(uniforms.parallax.w, 0)
     }
 }

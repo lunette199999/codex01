@@ -423,5 +423,71 @@ class DisplacementFieldTests(unittest.TestCase):
         self.assertAlmostEqual(float(np.abs(field).max()), 0.0)
 
 
+class FrontFacingInvariantTests(unittest.TestCase):
+    """The character must read as front-facing with the head and neck upright.
+
+    These pin the two structural properties that guarantee it, so a later
+    parameter change cannot quietly introduce a tilt."""
+
+    def test_only_hair_layers_are_flagged_for_simulation(self):
+        hair = {layer.name for layer in LAYERS if layer.hair}
+        self.assertEqual(hair, {"hair_back", "hair_front"})
+        for layer in LAYERS:
+            if layer.name in ("face", "body"):
+                self.assertFalse(layer.hair, f"{layer.name} must never be simulated")
+
+    def test_strands_are_only_derived_for_hair_layers(self):
+        albedo, masks = synthesize_placeholder()
+        _, meta = build_maps(albedo, masks)
+        layers_with_strands = {s["layer"] for s in meta["strands"]}
+        self.assertTrue(layers_with_strands)
+        self.assertNotIn("face", layers_with_strands)
+        self.assertNotIn("body", layers_with_strands)
+
+    def test_preview_creates_no_solver_for_face_or_body(self):
+        from render_preview import PreviewRenderer
+        renderer = PreviewRenderer(Path("assets/placeholder"), "mannequin", scale=0.25)
+        self.assertNotIn("face", renderer.solvers)
+        self.assertNotIn("body", renderer.solvers)
+        self.assertTrue(set(renderer.solvers) <= {"hair_back", "hair_front"})
+
+    def test_face_pixels_are_identical_across_the_animation(self):
+        """The strongest form of the constraint: with the head held still, the
+        face must be bit-identical frame to frame while the hair swings. Any
+        rotation or deformation leaking into the face layer shows up here."""
+        from render_preview import PreviewRenderer
+        renderer = PreviewRenderer(Path("assets/placeholder"), "mannequin", scale=0.25)
+        rig = LightRig()
+
+        for solver in renderer.solvers.values():
+            solver.reset()
+            for _ in range(60):
+                solver.step(1 / 60, (0.02, 0.0))     # displace the hair
+
+        moved = np.asarray(renderer.frame(rig, (0.0, 0.0)), np.int16)
+
+        for solver in renderer.solvers.values():
+            solver.reset()
+        rest = np.asarray(renderer.frame(rig, (0.0, 0.0)), np.int16)
+
+        # The hair must have moved...
+        self.assertGreater(int(np.abs(moved - rest).max()), 8, "hair did not move at all")
+
+        # ...while the face region did not. Sample inside the face mask, away
+        # from where hair can legitimately sweep across it.
+        face_mask = np.asarray(
+            Image.open("assets/placeholder/mannequin.mask.face.png").convert("L").resize(
+                (rest.shape[1], rest.shape[0]), Image.LANCZOS
+            ), np.float32
+        ) / 255.0
+        core = face_mask > 0.99
+        from scipy.ndimage import binary_erosion
+        core = binary_erosion(core, iterations=6)
+        self.assertGreater(int(core.sum()), 200, "face core sample region is too small")
+
+        delta = np.abs(moved - rest)[core].max()
+        self.assertEqual(int(delta), 0, "face pixels changed while only the hair was moving")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

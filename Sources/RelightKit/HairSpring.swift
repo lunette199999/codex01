@@ -1,5 +1,29 @@
 //  HairSpring.swift
 //  Per-strand hair chains. Port of tools/hair_spring.py.
+//
+//  STATUS: ALTERNATIVE IMPLEMENTATION - NOT A REPLACEMENT.
+//
+//  The shipping app's hair motion lives in Motion.swift (three spring segments
+//  per side, force-based, 120 Hz fixed substeps, driving a local 2D image
+//  warp). That remains the active implementation and is untouched by this file.
+//
+//  This is a second approach offered for comparison: a chain per strand with
+//  roots derived from the hair mask, solved as Verlet with a hard length
+//  constraint and a soft bend constraint, blended into a per-pixel
+//  displacement field. It is wired into RelightKit's own renderer only. Nothing
+//  here is called from the existing app, and switching over is a decision for
+//  whoever owns that app, not a consequence of merging this.
+//
+//  Differences worth weighing before adopting it:
+//  - Strand roots are derived from the mask, so a new character needs no hand
+//    authoring; Motion.swift's segments are positioned by hand.
+//  - Motion in this version propagates root to tip within a single step and the
+//    ends overshoot the head by ~2.6x; the three-segment version moves each
+//    side more as a unit.
+//  - It costs one exp() and a short loop per pixel per hair layer, against
+//    Motion.swift's handful of CPU springs.
+//  - It has not been run inside the desktop app, at 24 fps, or on a real
+//    character asset. See STATUS.md.
 
 import Foundation
 import simd

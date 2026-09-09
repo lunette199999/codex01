@@ -113,10 +113,14 @@ public final class RelightRenderer {
     /// Packs one layer's strand state for the shader.
     ///
     /// Laid out to match `HairUniforms` in Relight.metal: the strand table,
-    /// then node offsets packed two per float4, then the parameter word. A
-    /// layer with no solver returns an all-zero block, whose `params.w` of 0
-    /// disables displacement entirely - which is what keeps the face rigid.
-    private func hairUniforms(for layer: PortraitLayer) -> [SIMD4<Float>] {
+    /// then node offsets packed two per float4, then the parameter word.
+    ///
+    /// **Front-facing invariant.** A layer whose `hair` flag is false returns an
+    /// all-zero block, and a zero `params.w` disables displacement entirely in
+    /// the shader. The face and body therefore cannot be deformed by the hair
+    /// system under any parameter values - only hair moves. Pinned by
+    /// `testNonHairLayersReceiveNoDisplacement`.
+    func hairUniforms(for layer: PortraitLayer) -> [SIMD4<Float>] {
         var slots = [SIMD4<Float>](repeating: .zero, count: Self.hairSlotCount)
 
         guard layer.hair,
