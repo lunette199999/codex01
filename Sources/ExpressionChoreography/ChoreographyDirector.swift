@@ -223,15 +223,22 @@ public final class ChoreographyDirector {
 
         let mask = speechMask(isSpeechActive: input.isSpeechActive)
         let maskedOverlay = overlay.masking(mask)
-        let composed = PoseWeights.layer(base: input.basePose, overlay: maskedOverlay)
+        // The reservation is sized on the unmasked overlay, so withholding the
+        // mouth component does not hand headroom back to the base and step the
+        // smile in the same frame.
+        let composed = PoseWeights.layer(base: input.basePose, overlay: maskedOverlay, claiming: overlay.total)
 
         var blink = ChoreographyLimits.clamp(input.baseBlink, 0, 1, fallback: 0)
         var overridden = false
         if let current = active, case .hold(let value) = current.sequence.steps[current.stepIndex].blink {
+            // An explicit hold is the author's decision and takes effect at once.
             blink = ChoreographyLimits.clamp(value, 0, 1, fallback: 0)
             overridden = true
-        } else if maskedOverlay.rest >= configuration.restBlinkSuppressionThreshold {
-            blink = 0
+        } else if configuration.blinkFadesUnderRestOverlay && maskedOverlay.rest > 0 {
+            // Proportional rather than a threshold: a blink under an eyelid the
+            // overlay has already closed is invisible, and fading keeps the
+            // blink channel continuous as the pose comes and goes.
+            blink *= 1 - maskedOverlay.rest
             overridden = true
         }
 
@@ -274,7 +281,6 @@ public final class ChoreographyDirector {
         var from: PoseWeights
         var duration: Double
         var elapsed: Double
-        var mask: PoseComponents
 
         func value() -> PoseWeights {
             guard duration > 0 else { return .identity }
@@ -322,10 +328,7 @@ public final class ChoreographyDirector {
     }
 
     private func speechMask(isSpeechActive: Bool) -> PoseComponents {
-        guard isSpeechActive else { return [] }
-        if let current = active { return current.sequence.speechMask }
-        if let releasing = release { return releasing.mask }
-        return []
+        isSpeechActive ? configuration.speechMask : []
     }
 
     // MARK: - Scheduling
@@ -368,18 +371,18 @@ public final class ChoreographyDirector {
             overlay = .identity
             release = nil
         case .release(let blend):
-            beginRelease(blend: blend, mask: current.sequence.speechMask)
+            beginRelease(blend: blend)
         }
     }
 
-    private func beginRelease(blend: Double, mask: PoseComponents) {
+    private func beginRelease(blend: Double) {
         let duration = ChoreographyLimits.clamp(blend, 0, ChoreographyLimits.maximumStepBlend, fallback: 0)
         guard duration > 0, !overlay.isIdentity else {
             overlay = .identity
             release = nil
             return
         }
-        release = ReleaseState(from: overlay, duration: duration, elapsed: 0, mask: mask)
+        release = ReleaseState(from: overlay, duration: duration, elapsed: 0)
     }
 
     private func insertQueued(_ sequence: ChoreographySequence) {
@@ -540,7 +543,7 @@ public final class ChoreographyDirector {
         // persistent expression state in the app. (`cancelBehavior` describes an
         // early stop; this is the ordinary end of the last beat.)
         if !overlay.isIdentity {
-            beginRelease(blend: configuration.releaseBlend, mask: current.sequence.speechMask)
+            beginRelease(blend: configuration.releaseBlend)
         }
         return remaining
     }

@@ -15,9 +15,11 @@ The core depends on Foundation alone.
   `ExpressionPose`, plus a compile-check shim and a head-less reproduction of
   `DesktopController.renderFrame()`.
 * `examples/ChoreographyDemo/` — `choreo-demo`, a per-frame CSV/JSONL dump.
-* `Tests/` — 97 XCTest cases; see [docs/TEST-LOG.md](docs/TEST-LOG.md) for what
+* `Tests/` — 114 XCTest cases; see [docs/TEST-LOG.md](docs/TEST-LOG.md) for what
   was actually compiled and run.
 * [docs/INTEGRATION.md](docs/INTEGRATION.md) — the four insertion points.
+* [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) — the composition and mouth-ownership
+  acceptance cases, and what is still unverified.
 
 ---
 
@@ -33,10 +35,20 @@ Stated first, because the boundaries matter more than the feature list.
   demonstrate the framework; they are not new artwork. Real expression material
   still has to come from the original four photographs and four clips.
 * **It adds no pose, gesture, head or neck rotation, prop or garment.**
-* **It never produces a mouth shape.** `ChoreographyOutput` has no aperture and
-  no width field, so it structurally cannot compete with `MouthTimeline`,
-  `MouthEnvelope`, or a silent-gap closure. There is no new phoneme timeline and
-  no smoothing over a consonant closure.
+* **It never writes the mouth columns.** `ChoreographyOutput` has no aperture
+  and no width field, so `MotionFrame.mouth` and `mouthWide` stay entirely with
+  `MouthTimeline`, `MouthEnvelope` and the silent-gap closure. There is no new
+  phoneme timeline and no smoothing over a consonant closure.
+
+  **It does affect mouth *shape*, indirectly, and that is not the same claim.**
+  Two of the four expression weights are mouth-shaping: `ExpressionPose.mouthOpening`
+  returns `parted` as the resting aperture whenever nothing is playing, and
+  `pressed` selects the pressed-lip layer. A sequence that reaches for 自然微张唇
+  therefore moves the rendered aperture — by design, in exactly the place the app
+  already lets a manually selected expression move it. What the module does not
+  do is move it while a sentence is playing, or ramp it back afterwards: see
+  [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) for how that boundary is held and
+  what was measured.
 * **It does not rewrite `DesktopController`.** The adapter is additive: four
   insertion points, no replacement.
 
@@ -51,7 +63,7 @@ reimplemented under a new name; the module consumes them.
 | --- | --- |
 | `ExpressionTransition` — one interruptible cross-fade | Multi-beat named sequences that layer **on top** of whatever it is showing |
 | `BlinkClock` — blink timing and shape | Per-beat directives: hold the eyes, or ask that clock for one blink |
-| `MouthTimeline` — word-level mouth poses | Nothing. The module has no mouth output at all |
+| `MouthTimeline` — word-level mouth poses | Nothing. The module writes no mouth column |
 | `MouthEnvelope` — loudness fallback | Nothing |
 | `RestMouthReturn` — the aperture returning after a sentence | A speech mask, so the module stops *driving* `parted` while a sentence plays and that one owner still decides when it comes back |
 | `HairPhysics`, body movement, window placement | Nothing |
@@ -96,6 +108,7 @@ leaves hidden state behind.
 | `BlinkClock` state, blink shape and interval | **Host** | The module may hold a value for a beat, or request one trigger |
 | Blink value in the frame | **Module** returns it | Host's own value unless a beat overrode it |
 | `mouth`, `mouthWide` | **Host** | The module has no such field |
+| Resting aperture when nothing is playing | **Module** composes it into `parted`, **host** gates it | `mouthOpening` reads `parted`; this is the one mouth-shape path the module is on |
 | `MouthTimeline`, `MouthEnvelope`, silent-gap closure | **Host** | Untouched |
 | `RestMouthReturn` and the aperture's return | **Host** | The module only stops driving `parted` while speaking |
 | `HairPhysics`, `movement`, window frame, relight | **Host** | Untouched |
@@ -173,9 +186,17 @@ is an ordinary cross-fade. Every pose the host can produce satisfies the
 precondition. If a base pose were already over budget the module is guaranteed
 not to make it worse.
 
-**Speech.** While `isSpeechActive`, a sequence's `speechMask` components are not
-emitted. The default is `.speechOwned` (`parted` only), which matches what the
-shipped app already does: it zeroes `parted` during playback and lets a
+The reservation is sized on the overlay's total **before** the speech mask is
+applied. Sizing it on what survives the mask would hand weight back to the base
+and step every other component in the same frame — withholding the mouth would
+visibly brighten the smile. This was a real defect, measured at 0.272 in one
+frame; case B1 in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) pins it.
+
+**Speech.** While `isSpeechActive`, the components in `configuration.speechMask`
+are not emitted. It is one policy for the whole module rather than a per-sequence
+field: if two sequences disagreed, the mask would change the instant one
+preempted the other and step whatever the new mask withholds. The default is
+`.speechOwned` (`parted` only), which matches what the shipped app already does: it zeroes `parted` during playback and lets a
 pressed-lip selection stay. A smile is untouched. `.speechOwnedStrict` also holds
 back `pressed` for sequences that want it. Un-masking is a single step with no
 ramp of its own, because `RestMouthReturn` — applied by the host to the composed
@@ -241,9 +262,11 @@ expression in `updateTimer()`, and the lifecycle calls in
 
 ## Testing
 
-97 XCTest cases, compiled and run. Exactly what ran, on what, and what could not
-be checked here is recorded in [docs/TEST-LOG.md](docs/TEST-LOG.md) with the raw
-log in `docs/logs/build-and-test.txt`.
+114 XCTest cases, compiled and run. Exactly what ran, on what, and what could
+not be checked here is recorded in [docs/TEST-LOG.md](docs/TEST-LOG.md) with the
+raw log in `docs/logs/build-and-test.txt`. The composition and mouth-ownership
+cases are set out separately in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), which
+also lists what still needs macOS and what still needs an eye.
 
 ```
 swift build

@@ -12,8 +12,9 @@
   的接入适配器，另含一个编译校验用的宿主类型副本，以及 `DesktopController.renderFrame()`
   的无界面复现。
 * `examples/ChoreographyDemo/` —— 命令行 `choreo-demo`，逐帧输出 CSV / JSONL。
-* `Tests/` —— 97 项 XCTest；实际编译与运行情况见 [docs/TEST-LOG.md](docs/TEST-LOG.md)。
+* `Tests/` —— 114 项 XCTest；实际编译与运行情况见 [docs/TEST-LOG.md](docs/TEST-LOG.md)。
 * [docs/INTEGRATION.md](docs/INTEGRATION.md) —— 四个插入点。
+* [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) —— 合成与嘴形归属的验收用例，以及尚未验证的部分。
 
 ---
 
@@ -27,9 +28,16 @@
   已有的六组权重。示例序列用来验证框架，不代表已经做出新表情。真正的表情素材
   仍须回到原来的四张照片和四段视频。
 * **不新增姿势、手势、头颈旋转、物件或服装。**
-* **绝不生成口型。** `ChoreographyOutput` 里根本没有开口度和嘴宽字段，因此在结构上
-  就不可能与 `MouthTimeline`、`MouthEnvelope` 或静音闭唇争抢；不生成新的字音时间轴，
-  也不会把辅音闭合平滑掉。
+* **绝不写入口型两列。** `ChoreographyOutput` 里没有开口度和嘴宽字段，所以
+  `MotionFrame.mouth` 与 `mouthWide` 完全留给 `MouthTimeline`、`MouthEnvelope` 和静音
+  闭唇；不生成新的字音时间轴，也不会把辅音闭合平滑掉。
+
+  **但它确实会间接影响嘴形，这是两回事。** 四个表情权重里有两个本身就是嘴部形状：
+  没有语音播放时 `ExpressionPose.mouthOpening` 直接返回 `parted` 作为静息开口度，
+  `pressed` 则选中抿唇图层。因此一条走向"自然微张唇"的序列**会**移动渲染出来的开口度
+  ——这是设计使然，位置与 App 现在允许手选表情去移动它的地方完全相同。模块不做的是：
+  在句子播放期间移动它，或在句子结束后自己去把它拉回来。这条边界如何守住、实测数值
+  多少，见 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)。
 * **不重写 `DesktopController`。** 适配是叠加式的：四个插入点，不做替换。
 
 ---
@@ -42,7 +50,7 @@
 | --- | --- |
 | `ExpressionTransition` —— 单次可被打断的过渡 | 多拍具名序列，**叠加**在它当前显示的姿态之上 |
 | `BlinkClock` —— 眨眼时序与形状 | 每一拍的眨眼指令：保持睁/闭，或向这只时钟请求一次眨眼 |
-| `MouthTimeline` —— 字级口型 | 无。模块没有任何口型输出 |
+| `MouthTimeline` —— 字级口型 | 无。模块不写口型两列 |
 | `MouthEnvelope` —— 音量回退 | 无 |
 | `RestMouthReturn` —— 语音结束后的嘴形回位 | 一个语音掩码：说话期间模块不再驱动 `parted`，何时回来仍由这一个所有者决定 |
 | `HairPhysics`、身体位移、窗口摆放 | 无 |
@@ -81,6 +89,7 @@
 | `BlinkClock` 状态、眨眼形状与间隔 | **宿主** | 模块只能在一拍内保持某个值，或请求触发一次 |
 | 帧里的 blink 值 | **模块**返回 | 除非某一拍覆盖，否则就是宿主自己的值 |
 | `mouth`、`mouthWide` | **宿主** | 模块没有这两个字段 |
+| 无语音时的静息开口度 | **模块**合成进 `parted`，**宿主**把关 | `mouthOpening` 读 `parted`；这是模块唯一涉及嘴形的通路 |
 | `MouthTimeline`、`MouthEnvelope`、静音闭唇 | **宿主** | 原样不动 |
 | `RestMouthReturn` 与嘴形回位 | **宿主** | 模块只是在说话期间不驱动 `parted` |
 | `HairPhysics`、`movement`、窗口位置、光影 | **宿主** | 原样不动 |
@@ -155,7 +164,13 @@ result = base * (1 - min(1, overlay.total)) + overlay
 交叉淡入。宿主能产生的每一种姿态都满足这个前提；即便传进来的 base 本身已经超预算，
 模块也保证不会让它更糟。
 
-**说话期间。** `isSpeechActive` 为真时，序列 `speechMask` 里的分量不输出。默认是
+余量按覆盖层**施加掩码之前**的总量计算。若按掩码之后的残量计算，压住嘴部分量就会把
+权重还给 base，使同一帧里其它每个分量都跳一下——压住嘴反而让笑容变亮。这曾是一个真实
+缺陷，实测单帧跳变 0.272；[docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) 的 B1 用例把它钉住。
+
+**说话期间。** `isSpeechActive` 为真时，`configuration.speechMask` 里的分量不输出。
+它是整个模块的一条策略，而不是每条序列各带一份：如果两条序列的掩码不一致，那么其中
+一条抢占另一条的那一帧掩码就会切换，被新掩码压住的分量会当场跳变。默认是
 `.speechOwned`（只含 `parted`），与现有 App 的行为一致：播放时把 `parted` 归零，而
 轻抿唇的选择依然保留。笑形不受影响。若希望更严格，可用 `.speechOwnedStrict`，连
 `pressed` 一起压住。解除掩码是一步到位、不带自己的斜坡，因为决定嘴形怎么回来的只有
@@ -213,8 +228,10 @@ swift run choreo-demo --scenario ambient --seed 42 --duration 240
 
 ## 测试
 
-97 项 XCTest，已实际编译并运行。到底在什么环境跑了什么、以及这里查不到的部分，都记在
-[docs/TEST-LOG.md](docs/TEST-LOG.md)，原始日志见 `docs/logs/build-and-test.txt`。
+114 项 XCTest，已实际编译并运行。到底在什么环境跑了什么、以及这里查不到的部分，都记在
+[docs/TEST-LOG.md](docs/TEST-LOG.md)，原始日志见 `docs/logs/build-and-test.txt`。合成与
+嘴形归属相关的验收用例单列在 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)，其中也写明了哪些
+还需要在 macOS 上验证、哪些还需要用眼睛看。
 
 ```
 swift build

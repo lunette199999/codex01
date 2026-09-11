@@ -142,6 +142,23 @@ let scenarios: [Scenario] = [
         }
     ),
     Scenario(
+        name: "aperture",
+        summary: "轻抿唇 base under a 微张唇 sequence across a sentence: the rendered aperture moves, and nothing else steps.",
+        duration: 6.0,
+        cues: [
+            Cue(at: 0.0) { $0.setExpression(.pressedLips, at: 0.0) },
+            Cue(at: 1.0) {
+                $0.play(ChoreographySequence(id: "aperture.parted", steps: [
+                    ChoreographyStep(.partedLips, blend: 0.3, hold: 30, label: "微张唇"),
+                ]))
+            },
+            Cue(at: 4.6) { $0.cancelAll() },
+        ],
+        speech: { time in
+            time >= 2.0 && time < 4.0 ? HostSpeechSample.silentDemo(at: time - 2.0) : .silent
+        }
+    ),
+    Scenario(
         name: "idle-off",
         summary: "Idle behaviour off. A manual expression and an explicit sequence still run, and the timer term returns to 0.",
         duration: 3.0,

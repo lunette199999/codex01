@@ -41,10 +41,18 @@ public struct ChoreographyConfiguration: Equatable, Hashable, Sendable {
     /// Fallback fade used when a sequence ends or is dropped without its own
     /// blend. Matches `ExpressionTransition`'s 0.38 s.
     public var releaseBlend: Double
-    /// When the module's own overlay closes the eyes at least this much, the
-    /// automatic blink is held shut rather than fighting the pose. Set above 1
-    /// to disable.
-    public var restBlinkSuppressionThreshold: Double
+    /// Overlay components the module stops driving while speech is active.
+    ///
+    /// This is one policy for the whole module rather than a per-sequence
+    /// setting on purpose: if two sequences disagreed, the mask would change the
+    /// instant one preempted the other and step whatever the new mask withholds.
+    /// Which components speech owns is a property of the host, not of a beat.
+    public var speechMask: PoseComponents
+    /// Fade the automatic blink out in proportion to how far the module's own
+    /// overlay has already closed the eyes. A blink underneath a closed-eye pose
+    /// is invisible anyway, and fading rather than switching keeps the blink
+    /// channel continuous. Set false to pass the host's blink straight through.
+    public var blinkFadesUnderRestOverlay: Bool
     public var maximumQueueDepth: Int
     public var ambient: AmbientConfiguration
 
@@ -52,14 +60,16 @@ public struct ChoreographyConfiguration: Equatable, Hashable, Sendable {
                 seed: UInt64 = 0x5EED_0000_0001,
                 maximumTimeStep: Double = 0.5,
                 releaseBlend: Double = 0.38,
-                restBlinkSuppressionThreshold: Double = 0.6,
+                speechMask: PoseComponents = .speechOwned,
+                blinkFadesUnderRestOverlay: Bool = true,
                 maximumQueueDepth: Int = ChoreographyLimits.maximumQueueDepth,
                 ambient: AmbientConfiguration = AmbientConfiguration()) {
         self.vocabulary = vocabulary
         self.seed = seed
         self.maximumTimeStep = ChoreographyLimits.clamp(maximumTimeStep, 0.05, 5, fallback: 0.5)
         self.releaseBlend = ChoreographyLimits.clamp(releaseBlend, 0, ChoreographyLimits.maximumStepBlend, fallback: 0.38)
-        self.restBlinkSuppressionThreshold = restBlinkSuppressionThreshold
+        self.speechMask = speechMask
+        self.blinkFadesUnderRestOverlay = blinkFadesUnderRestOverlay
         self.maximumQueueDepth = max(0, min(ChoreographyLimits.maximumQueueDepth, maximumQueueDepth))
         self.ambient = ambient
     }

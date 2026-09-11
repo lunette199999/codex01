@@ -88,8 +88,6 @@ public struct ChoreographySequence: Equatable, Hashable, Sendable {
     public var repeatMode: RepeatMode
     public var admission: Admission
     public var cancelBehavior: CancelBehavior
-    /// Overlay components the module stops driving while speech is active.
-    public var speechMask: PoseComponents
     public var jitter: StepJitter?
     /// Marks self-scheduled idle behaviour. Ambient sequences are the only thing
     /// the module starts on its own, and they stop entirely when idle is off.
@@ -101,7 +99,6 @@ public struct ChoreographySequence: Equatable, Hashable, Sendable {
                 repeatMode: RepeatMode = .once,
                 admission: Admission = .preempt,
                 cancelBehavior: CancelBehavior = .release(blend: 0.38),
-                speechMask: PoseComponents = .speechOwned,
                 jitter: StepJitter? = nil,
                 isAmbient: Bool = false) {
         self.id = id
@@ -110,7 +107,6 @@ public struct ChoreographySequence: Equatable, Hashable, Sendable {
         self.repeatMode = repeatMode
         self.admission = admission
         self.cancelBehavior = cancelBehavior
-        self.speechMask = speechMask
         self.jitter = jitter
         self.isAmbient = isAmbient
     }

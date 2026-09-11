@@ -83,13 +83,11 @@ func hold(_ key: ExpressionKey?,
           duration: Double = 1.0,
           priority: ChoreographyPriority = .standard,
           admission: Admission = .preempt,
-          blink: StepBlink = .inherit,
-          speechMask: PoseComponents = .speechOwned) -> ChoreographySequence {
+          blink: StepBlink = .inherit) -> ChoreographySequence {
     ChoreographySequence(id: id,
                          steps: [ChoreographyStep(key, intensity: intensity, blend: blend, hold: duration, blink: blink, label: id)],
                          priority: priority,
-                         admission: admission,
-                         speechMask: speechMask)
+                         admission: admission)
 }
 
 /// The largest per-frame change a smooth-step of `amplitude` over `blend`

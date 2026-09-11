@@ -178,7 +178,7 @@ this: on, then off, exactly once each.
 | `windowWillClose(_:)` | `choreography.setPresentation(.hidden)` |
 | `willSleep()` | `choreography.setPresentation(.suspended)` |
 | `didWake()` | `choreography.setPresentation(.visible)` when `window.isVisible` |
-| `toggleIdle()` | `choreography.setIdleEnabled(idle)` after the toggle |
+| `toggleIdle()` | `choreography.setIdleEnabled(idle && !reduced)` after the toggle |
 
 What each one means:
 
@@ -193,6 +193,16 @@ What each one means:
 * **Idle off** — a running *idle* sequence releases smoothly and no new one is
   scheduled. Explicit sequences are unaffected: they still blend, and they still
   let the timer stop when they finish.
+
+**Reduce motion.** The app already drops hair and body movement when
+`NSWorkspace.shared.accessibilityDisplayShouldReduceMotion` is set. Self-scheduled
+idle sequences are motion too and should go with them, which is why the table
+above passes `idle && !reduced`. `reduced` is read per frame in `renderFrame()`,
+so either re-check it there and call `setIdleEnabled` when it changes, or observe
+`NSWorkspace.didChangeAccessibilityDisplayOptionsNotification`. Explicit
+sequences are a deliberate response to something and are not gated by this — that
+is a product decision, not a technical one, so make it deliberately. **This
+specific wiring has not been compiled or run; it needs macOS.**
 
 There is a second, independent safeguard for the case where the app keeps
 rendering but the clock jumps anyway — a stalled main thread, a paused VM. Any
@@ -265,7 +275,25 @@ the shipped self-test asserts.
 
 `mouth` and `mouthWide` are not produced by the module at all — the output type
 has no field for either — so `MouthTimeline`, `MouthEnvelope` and silent-gap
-closure keep full control of the aperture, and no consonant closure is smoothed.
+closure keep full control of the *playing* mouth, and no consonant closure is
+smoothed.
+
+That is not the same as saying the module cannot reach the mouth. When nothing
+is playing, `ExpressionPose.mouthOpening` returns `parted` as the resting
+aperture, and `pressed` selects the pressed-lip layer either way. A sequence that
+reaches for 自然微张唇 therefore does move the rendered aperture — in the same
+place a manually selected expression already moves it. Two things keep that out
+of a playing sentence, and the order in §3 is what makes them work:
+
+* `configuration.speechMask` (default `.speechOwned` = `parted`) stops the module
+  *driving* the aperture while `speechActive`.
+* `RestMouthReturn`, applied by the app to the **composed** pose, stays the only
+  thing that decides when the aperture becomes visible again. The module adds no
+  ramp of its own, so there is never a second controller on that value.
+
+The layering reservation is sized on the overlay's total *before* the mask, so
+withholding the aperture does not hand weight back to the base and step the rest
+of the face. `docs/ACCEPTANCE.md` measures all of this.
 
 ---
 
@@ -280,4 +308,8 @@ closure keep full control of the aperture, and no consonant closure is smoothed.
       `updateTimer()` call
 - [ ] `updateTimer()`: `|| choreography.needsContinuousUpdates`
 - [ ] `show` / `hide` / `windowWillClose` / `willSleep` / `didWake` / `toggleIdle`
+- [ ] `setIdleEnabled` gated on `reduced` as well as `idle`
 - [ ] Nothing else in `DesktopController` changed
+- [ ] Reviewed against `docs/ACCEPTANCE.md` — especially insertion order relative
+      to the `RestMouthReturn` line, and `RestMouthReturn` being called exactly
+      once per frame on the composed pose

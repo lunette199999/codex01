@@ -12,10 +12,13 @@ public struct PoseComponents: OptionSet, Hashable, Sendable {
     public static let parted = PoseComponents(rawValue: 1 << 3)
     public static let all: PoseComponents = [.smile, .rest, .pressed, .parted]
 
-    /// The component speech already owns in 0.3.4: `ExpressionPose.mouthOpening`
-    /// reads `parted` for the resting aperture and `RestMouthReturn` scales it
-    /// back in after playback. The module simply stops *driving* that component
-    /// while speech is active; the host keeps owning when it becomes visible again.
+    /// The component speech already owns in 0.3.4.
+    ///
+    /// `parted` is a mouth-shape weight, not a neutral one: `mouthOpening`
+    /// returns it as the resting aperture whenever nothing is playing. While a
+    /// sentence plays the module stops *driving* it; the host's
+    /// `RestMouthReturn` stays the only thing that decides when it is visible
+    /// again, so the two never ramp the same value at once.
     public static let speechOwned: PoseComponents = [.parted]
 
     /// A stricter mask for sequences that also want the pressed-lip texture held
@@ -106,8 +109,16 @@ public struct PoseWeights: Equatable, Hashable, Sendable {
     /// * `base.total > 1`   ⇒  `result.total <= base.total`. The module cannot
     ///   repair a base pose that was already over budget, but it is guaranteed
     ///   never to make one worse.
-    public static func layer(base: PoseWeights, overlay: PoseWeights) -> PoseWeights {
-        let share = min(1, overlay.total)
+    ///
+    /// `claiming` exists for the case where a policy has zeroed part of the
+    /// overlay. Sizing the headroom from what is left would hand weight back to
+    /// the base and step every other component in the same frame — withholding
+    /// the mouth would visibly brighten the smile. Passing the overlay's total
+    /// *before* the components were withheld keeps the reservation constant, so
+    /// only the withheld component changes.
+    public static func layer(base: PoseWeights, overlay: PoseWeights, claiming claimed: Double? = nil) -> PoseWeights {
+        let requested = claimed ?? overlay.total
+        let share = min(1, max(overlay.total, requested.isFinite ? max(0, requested) : 0))
         if share <= 0 { return base }
         let keep = 1 - share
         return PoseWeights(smile: base.smile * keep + overlay.smile,

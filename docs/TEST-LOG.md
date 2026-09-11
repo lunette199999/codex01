@@ -30,7 +30,7 @@ $ swift build --build-tests
 Build complete!                     0 warnings, 0 errors
 
 $ swift test
-Executed 97 tests, with 0 failures (0 unexpected) in 0.205 seconds
+Executed 114 tests, with 0 failures (0 unexpected)
 ```
 
 | Suite | Tests | What it covers |
@@ -39,10 +39,11 @@ Executed 97 tests, with 0 failures (0 unexpected) in 0.205 seconds
 | `TimeTests` | 8 | First frame, accumulation, NaN, infinity, rewound clock, oversized step, re-synchronisation, invalid cap |
 | `SequenceValidationTests` | 8 | Structural refusals, non-finite timing, clamping, overlong sequences, zero-length endless sequences, repeat and jitter repair |
 | `ArbitrationTests` | 15 | Three-beat run, interruption, reversal, lower priority, equal priority, `rejectIfBusy`, queueing and queue order, queue bound, cancel, cancel-all, no standing overlay, timer term, repeats, endless |
-| `SpeechAndBlinkTests` | 12 | No mouth field exists, smile survives speech, parted withheld, composed pose equals base under a full mask, strict mask, silent gap, blink pass-through, hold, rest suppression, threshold off, trigger edge, per-repeat triggers |
+| `SpeechAndBlinkTests` | 13 | No mouth column is written, smile survives speech, parted withheld, pose untouched with nothing running, the reservation holds across a sentence boundary, strict mask, silent gap, blink pass-through, hold, proportional fade under a rest overlay, continuity with a blink in flight, fade switchable, trigger edge, per-repeat triggers |
 | `LifecycleTests` | 11 | Hide, hidden pass-through, refusal while hidden, resume, idle re-arm, large step, idle off, idle off mid-sequence, ambient refusal, speech pause, reset |
 | `RobustnessTests` | 9 | NaN clock, poisoned base pose, rewound clock, 6 000-frame hostile fuzz, 3 000-frame realistic fuzz, zero-length steps, zero blend, duplicate timestamps, no internal clock |
 | `BridgeTests` | 6 | Vocabulary taken from the app's own table, bundled copy matches, both-way enum bridging, exact pose conversion, poisoned pose, timer-change edge |
+| `CompositionAcceptanceTests` | 15 | Composition, mouth ownership and the speech-mask interactions. Set out in full in `docs/ACCEPTANCE.md`, including the three defects they found and the one interaction they bound |
 | `RenderLoopTests` | 12 | Mouth columns untouched, aperture identical with and without a sequence, closures and pauses stay closed, smile survives while parted does not, `RestMouthReturn` sole ownership, manual expression with idle off, layering over a manual expression, timer returns to false, blink request reaches `BlinkClock`, eye-rest holds the blink, hide/resume, every rendered frame in range |
 
 The two fuzz tests drive roughly 9 000 additional frames with hostile inputs
@@ -80,6 +81,7 @@ Stated plainly, because these are real gaps:
   sequence *looks* right is not something these tests can say. They assert
   numeric continuity — no frame-to-frame jump larger than the blend itself
   implies — which is a necessary condition, not a sufficient one.
+  `docs/ACCEPTANCE.md` lists the five specific things that still need an eye.
 * **No timing or performance measurement on a real 24 fps run loop.** The module
   does a few dozen floating-point operations per frame and allocates only the
   notice array, but that has not been profiled on the target machine.
@@ -89,6 +91,18 @@ Stated plainly, because these are real gaps:
   language mode. Value types are `Sendable`; `ChoreographyDirector` is a
   deliberately non-`Sendable` class meant to be driven from the same thread as
   `renderFrame()`.
+
+## Second pass: composition review
+
+`docs/ACCEPTANCE.md` records a follow-up review of how the module's expression
+weights reach the mouth. It corrected an over-broad claim in this delivery (the
+module cannot write the mouth *columns*, but `parted` and `pressed` do shape the
+mouth), found three real discontinuities and fixed them, and bounded a fourth
+interaction that is inherent rather than a defect. The fifteen cases in
+`CompositionAcceptanceTests` are the result and are included in the 114 above.
+
+The local integration patch had not been received when this was written, so it
+has not been reviewed against those cases.
 
 ## Reproducing
 

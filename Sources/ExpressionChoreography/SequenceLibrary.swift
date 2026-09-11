@@ -50,14 +50,15 @@ public enum SequenceLibrary {
         )
     }
 
-    /// A short 闭眼休息. The automatic blink is held shut for the beat so the
-    /// host's `BlinkClock` does not fight a pose that already closes the eyes.
+    /// A short 闭眼休息. No explicit blink directive is needed: the automatic
+    /// blink fades out in proportion to how far the pose has closed the eyes, so
+    /// nothing steps when the beat begins or ends.
     public static func briefEyeRest(id: String = "mood.eyeRest",
                                     priority: ChoreographyPriority = .standard) -> ChoreographySequence {
         ChoreographySequence(
             id: id,
             steps: [
-                ChoreographyStep(.resting, blend: 0.45, hold: 1.20, blink: .hold(0), label: "闭眼休息"),
+                ChoreographyStep(.resting, blend: 0.45, hold: 1.20, label: "闭眼休息"),
                 ChoreographyStep(nil, blend: 0.50, label: "睁眼"),
             ],
             priority: priority

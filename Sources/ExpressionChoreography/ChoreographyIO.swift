@@ -76,9 +76,19 @@ public struct ChoreographyNotice: Equatable, Hashable, Sendable {
 
 /// Everything the module produces for a frame.
 ///
-/// There is deliberately no mouth aperture and no mouth width here: the module
-/// cannot express a mouth shape, so it structurally cannot compete with the
-/// existing `MouthTimeline`, `MouthEnvelope` or silent-gap closure.
+/// There is deliberately no mouth aperture and no mouth width here, so the
+/// module cannot write `MotionFrame.mouth` or `mouthWide` and cannot compete
+/// with `MouthTimeline`, `MouthEnvelope` or a silent-gap closure for the
+/// per-syllable shape of a playing sentence.
+///
+/// That is a narrower guarantee than "it cannot affect the mouth", and the
+/// difference matters. Two of the four weights in `pose` shape the mouth on
+/// their way through the renderer: `ExpressionPose.mouthOpening` returns
+/// `parted` as the resting aperture whenever nothing is playing, and `pressed`
+/// selects the pressed-lip layer. So the module does move the rendered mouth —
+/// indirectly, through the expression weights, and only where the host has left
+/// it to the expression to decide. `configuration.speechMask` and the host's
+/// `RestMouthReturn` are what keep that out of the way of a playing sentence.
 public struct ChoreographyOutput: Equatable, Hashable, Sendable {
     /// Base pose with the module's overlay laid on top. Bounded and finite.
     public var pose: PoseWeights

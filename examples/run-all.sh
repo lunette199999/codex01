@@ -10,7 +10,7 @@ mkdir -p examples/output
 swift build -c release --product choreo-demo >/dev/null
 binary="$(swift build -c release --show-bin-path)/choreo-demo"
 
-for scenario in greeting interrupt reverse cancel speech masked idle-off hide-resume time-gap queue; do
+for scenario in greeting interrupt reverse cancel speech masked aperture idle-off hide-resume time-gap queue; do
     "$binary" --scenario "$scenario" --format "$format" > "examples/output/$scenario.$format"
     printf '  %-12s -> examples/output/%s.%s\n' "$scenario" "$scenario" "$format"
 done

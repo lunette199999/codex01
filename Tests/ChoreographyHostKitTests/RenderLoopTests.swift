@@ -157,13 +157,16 @@ final class RenderLoopTests: XCTestCase {
         XCTAssertTrue(sawBlink, "the host clock produced the blink the step asked for")
     }
 
-    func testAnEyeRestBeatHoldsTheAutomaticBlinkShutInTheRenderedFrame() {
+    func testAnEyeRestBeatFadesTheAutomaticBlinkOutInTheRenderedFrame() {
         let harness = HostRenderLoopHarness(idleEnabled: true)
         harness.play(SequenceLibrary.briefEyeRest())
         var blinks: [Double] = []
         run(harness, seconds: 1.5, at: { _, frame in blinks.append(frame.blink) })
-        XCTAssertTrue(blinks.allSatisfy { $0 == 0 })
         XCTAssertEqual((harness.frame.expressionPose ?? ExpressionPose()).rest, 1, accuracy: 1e-9)
+        XCTAssertEqual(blinks.last, 0, "a fully closed pose leaves no automatic blink underneath")
+        var worst = 0.0
+        for (previous, current) in zip(blinks, blinks.dropFirst()) { worst = max(worst, abs(current - previous)) }
+        XCTAssertLessThan(worst, 0.2, "and it gets there without a step")
     }
 
     // MARK: - Window lifecycle
