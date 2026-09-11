@@ -1,0 +1,63 @@
+--- a/Sources/ZhengZhipuDesktop/DesktopController.swift
++++ b/Sources/ZhengZhipuDesktop/DesktopController.swift
+@@ -23,6 +23,9 @@
+     /// 说话结束回位仍归 restMouthReturn,眨眼形状仍归 BlinkClock,
+     /// 口型仍归 MouthTimeline/MouthEnvelope,计时器仍归 updateTimer。
+     private let choreography = ChoreographyBridge()
++    /// 已经同步给编排的"自动待机"状态。Optional 的初值是 nil,所以第一次同步
++    /// 一定会真的发生,不必假设编排那边的默认值是什么。
++    private var choreographyIdle: Bool?
+     private var mouth = MouthEnvelope()
+     private var hair = HairPhysics()
+     private var hairEnabled: Bool
+@@ -78,9 +81,9 @@
+         portrait.onSave = { [weak self] in self?.savePlacement() }
+         portrait.onAudioDrop = { [weak self] in self?.playAudio($0) }
+         restorePlacement()
+-        // 启动时把 idle 的实际值同步过去 —— 否则编排按自己的默认值理解待机开关,
++        // 启动时把待机的实际值同步过去 —— 否则编排按自己的默认值理解待机开关,
+         // 就成了第二个"待机是否开启"的判断方。
+-        choreography.setIdleEnabled(idle)
++        syncChoreographyIdle(reduced: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+         if relightEnabled { applyRelight() }
+         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(willSleep), name: NSWorkspace.willSleepNotification, object: nil)
+         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(didWake), name: NSWorkspace.didWakeNotification, object: nil)
+@@ -159,6 +162,19 @@
+             self.timer = timer
+         } else if !needed { timer?.invalidate(); timer = nil }
+     }
++    /// 自动编排 = 待机开着 **且** 系统没有要求减少动态效果。
++    ///
++    /// 序列也是动态效果,应当和头发、身体位移一起被 reduceMotion 关掉。显式播放的
++    /// 序列和手动表情不受影响:setIdleEnabled 只关自排的待机行为,正在跑的显式序列
++    /// 照旧,setExpression 一个字都不碰。重新打开时编排从当前时刻重新计时,不补播。
++    /// 幂等,重复调用无代价。
++    private func syncChoreographyIdle(reduced: Bool) {
++        let enabled = idle && !reduced
++        guard choreographyIdle != enabled else { return }
++        choreographyIdle = enabled
++        choreography.setIdleEnabled(enabled)
++    }
++
+     func renderFrame(forced: MotionFrame? = nil) {
+         let now = ProcessInfo.processInfo.systemUptime
+         let delta = now - lastTick; lastTick = now
+@@ -187,6 +203,9 @@
+             }
+         }
+         let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
++        // 系统偏好可以在运行中改。这里复用已经读到的 reduced,不再多读一次,
++        // 也不需要额外的通知观察者:能看见动的时候一定在渲染。
++        syncChoreographyIdle(reduced: reduced)
+         let hairPose: HairPose
+         if idle && hairEnabled && !reduced { hairPose = hair.advance(delta: delta) }
+         else { hair.reset(); hairPose = HairPose() }
+@@ -247,7 +266,7 @@
+     }
+     @objc private func stopSpeech() { stopAudio(); renderFrame() }
+     @objc func toggleVisible() { window.isVisible ? hide() : show() }
+-    @objc private func toggleIdle() { idle.toggle(); defaults.set(idle, forKey: "idle"); choreography.setIdleEnabled(idle); blink.reset(at: elapsed); renderFrame(); updateTimer() }
++    @objc private func toggleIdle() { idle.toggle(); defaults.set(idle, forKey: "idle"); syncChoreographyIdle(reduced: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion); blink.reset(at: elapsed); renderFrame(); updateTimer() }
+     @objc private func toggleHair() { hairEnabled.toggle(); defaults.set(hairEnabled, forKey: "hair"); hair.reset(); renderFrame() }
+ 
+     /// 第一次打开要烘焙一次贴图,约 0.4 秒,只发生一次;之后开关是即时的。

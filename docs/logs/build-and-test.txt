@@ -1,25 +1,24 @@
 host:      Linux 6.18.44-fc-v24 x86_64, Ubuntu 24.04.4 LTS
 toolchain: SwiftWasm Swift version 5.9.1 (swift-5.9.1-RELEASE)
-target:    Target: x86_64-unknown-linux-gnu
-date:      2026-09-11 09:16:47 UTC
+date:      2026-09-11 09:59:29 UTC
 
 $ swift build
 Building for debugging...
-[1/19] Compiling ExpressionChoreography DeterministicRandom.swift
-[2/19] Compiling ExpressionChoreography Easing.swift
-[3/19] Compiling ExpressionChoreography ExpressionKey.swift
-[4/19] Compiling ExpressionChoreography PoseVocabulary.swift
-[5/19] Compiling ExpressionChoreography ChoreographyIO.swift
-[6/19] Compiling ExpressionChoreography ChoreographyPriority.swift
-[7/19] Compiling ExpressionChoreography ChoreographySequence.swift
-[8/19] Compiling ExpressionChoreography ChoreographyStep.swift
-[9/19] Compiling ExpressionChoreography PoseWeights.swift
-[10/19] Compiling ExpressionChoreography SequenceLibrary.swift
-[11/19] Compiling ExpressionChoreography TimeGate.swift
-[12/19] Compiling ExpressionChoreography AmbientScheduler.swift
-[13/19] Compiling ExpressionChoreography ChoreographyConfiguration.swift
-[14/19] Compiling ExpressionChoreography ChoreographyDirector.swift
-[15/19] Compiling ExpressionChoreography ChoreographyEvent.swift
+[1/19] Compiling ExpressionChoreography ChoreographyIO.swift
+[2/19] Compiling ExpressionChoreography ChoreographyPriority.swift
+[3/19] Compiling ExpressionChoreography ChoreographySequence.swift
+[4/19] Compiling ExpressionChoreography ChoreographyStep.swift
+[5/19] Compiling ExpressionChoreography PoseWeights.swift
+[6/19] Compiling ExpressionChoreography SequenceLibrary.swift
+[7/19] Compiling ExpressionChoreography TimeGate.swift
+[8/19] Compiling ExpressionChoreography AmbientScheduler.swift
+[9/19] Compiling ExpressionChoreography ChoreographyConfiguration.swift
+[10/19] Compiling ExpressionChoreography ChoreographyDirector.swift
+[11/19] Compiling ExpressionChoreography ChoreographyEvent.swift
+[12/19] Compiling ExpressionChoreography DeterministicRandom.swift
+[13/19] Compiling ExpressionChoreography Easing.swift
+[14/19] Compiling ExpressionChoreography ExpressionKey.swift
+[15/19] Compiling ExpressionChoreography PoseVocabulary.swift
 [16/20] Merging module ExpressionChoreography
 [16/23] Wrapping AST for ExpressionChoreography for debugging
 [18/23] Compiling ChoreographyHostKit ChoreographyBridge.swift
@@ -31,7 +30,7 @@ Building for debugging...
 [24/26] Merging module ChoreographyDemo
 [24/26] Wrapping AST for ChoreographyDemo for debugging
 [25/26] Linking choreo-demo
-Build complete! (10.21s)
+Build complete! (7.62s)
 
 $ swift build --build-tests
 [0/1] Planning build
@@ -39,14 +38,14 @@ Building for debugging...
 [1/19] Compiling ExpressionChoreographyTests ArbitrationTests.swift
 [2/19] Compiling ExpressionChoreographyTests TestSupport.swift
 [3/19] Compiling ExpressionChoreographyTests TimeTests.swift
-[4/19] Compiling ExpressionChoreographyTests LifecycleTests.swift
-[5/19] Compiling ExpressionChoreographyTests DeterminismTests.swift
-[6/20] Compiling ExpressionChoreographyTests PoseWeightsTests.swift
-[7/20] Compiling ExpressionChoreographyTests RobustnessTests.swift
-[8/20] Merging module ChoreographyHostKitTests
-[9/20] Compiling ExpressionChoreographyTests SequenceValidationTests.swift
-[10/20] Compiling ExpressionChoreographyTests SpeechAndBlinkTests.swift
-[10/20] Wrapping AST for ChoreographyHostKitTests for debugging
+[4/19] Compiling ExpressionChoreographyTests SequenceValidationTests.swift
+[5/19] Compiling ExpressionChoreographyTests SpeechAndBlinkTests.swift
+[6/19] Compiling ExpressionChoreographyTests PoseWeightsTests.swift
+[7/19] Compiling ExpressionChoreographyTests RobustnessTests.swift
+[8/19] Compiling ChoreographyHostKitTests RenderLoopTests.swift
+[9/19] Compiling ExpressionChoreographyTests DeterminismTests.swift
+[10/20] Merging module ChoreographyHostKitTests
+[13/21] Wrapping AST for ChoreographyHostKitTests for debugging
 [15/21] Merging module ExpressionChoreographyTests
 [15/21] /home/user/codex01/.build/x86_64-unknown-linux-gnu/debug/ExpressionChoreographyPackageDiscoveredTests.derived/all-discovered-tests.swift
 [16/21] Wrapping AST for ExpressionChoreographyTests for debugging
@@ -60,280 +59,282 @@ Building for debugging...
 [25/27] Merging module ExpressionChoreographyPackageTests
 [25/27] Wrapping AST for ExpressionChoreographyPackageTests for debugging
 [26/27] Linking ExpressionChoreographyPackageTests.xctest
-Build complete! (3.80s)
+Build complete! (3.02s)
 
 $ swift test
 Building for debugging...
-Build complete! (0.07s)
-Test Suite 'All tests' started at 2026-09-11 09:17:02.913
-Test Suite 'debug.xctest' started at 2026-09-11 09:17:02.915
-Test Suite 'BridgeTests' started at 2026-09-11 09:17:02.915
-Test Case 'BridgeTests.testABrokenHostPoseIsNeutralisedOnTheWayIn' started at 2026-09-11 09:17:02.915
+Build complete! (0.05s)
+Test Suite 'All tests' started at 2026-09-11 09:59:41.278
+Test Suite 'debug.xctest' started at 2026-09-11 09:59:41.279
+Test Suite 'BridgeTests' started at 2026-09-11 09:59:41.279
+Test Case 'BridgeTests.testABrokenHostPoseIsNeutralisedOnTheWayIn' started at 2026-09-11 09:59:41.279
 Test Case 'BridgeTests.testABrokenHostPoseIsNeutralisedOnTheWayIn' passed (0.001 seconds)
-Test Case 'BridgeTests.testEveryExpressionBridgesBothWaysWithNoSilentFallback' started at 2026-09-11 09:17:02.916
-Test Case 'BridgeTests.testEveryExpressionBridgesBothWaysWithNoSilentFallback' passed (0.0 seconds)
-Test Case 'BridgeTests.testPoseConversionIsExactInBothDirections' started at 2026-09-11 09:17:02.916
+Test Case 'BridgeTests.testEveryExpressionBridgesBothWaysWithNoSilentFallback' started at 2026-09-11 09:59:41.280
+Test Case 'BridgeTests.testEveryExpressionBridgesBothWaysWithNoSilentFallback' passed (0.101 seconds)
+Test Case 'BridgeTests.testPoseConversionIsExactInBothDirections' started at 2026-09-11 09:59:41.381
 Test Case 'BridgeTests.testPoseConversionIsExactInBothDirections' passed (0.0 seconds)
-Test Case 'BridgeTests.testTheBundledFallbackTableStillMatchesTheApp' started at 2026-09-11 09:17:02.916
-Test Case 'BridgeTests.testTheBundledFallbackTableStillMatchesTheApp' passed (0.001 seconds)
-Test Case 'BridgeTests.testTheTimerFlagOnlyReportsAChangeOnTheFrameItChanges' started at 2026-09-11 09:17:02.917
+Test Case 'BridgeTests.testTheBundledFallbackTableStillMatchesTheApp' started at 2026-09-11 09:59:41.381
+Test Case 'BridgeTests.testTheBundledFallbackTableStillMatchesTheApp' passed (0.0 seconds)
+Test Case 'BridgeTests.testTheTimerFlagOnlyReportsAChangeOnTheFrameItChanges' started at 2026-09-11 09:59:41.382
 Test Case 'BridgeTests.testTheTimerFlagOnlyReportsAChangeOnTheFrameItChanges' passed (0.001 seconds)
-Test Case 'BridgeTests.testTheVocabularyComesFromTheAppsOwnTargetTable' started at 2026-09-11 09:17:02.918
-Test Case 'BridgeTests.testTheVocabularyComesFromTheAppsOwnTargetTable' passed (0.101 seconds)
-Test Suite 'BridgeTests' passed at 2026-09-11 09:17:03.019
-	 Executed 6 tests, with 0 failures (0 unexpected) in 0.104 (0.104) seconds
-Test Suite 'CompositionAcceptanceTests' started at 2026-09-11 09:17:03.019
-Test Case 'CompositionAcceptanceTests.testA1TheModuleNeverWritesTheMouthColumnsButDoesReachTheRenderedAperture' started at 2026-09-11 09:17:03.019
+Test Case 'BridgeTests.testTheVocabularyComesFromTheAppsOwnTargetTable' started at 2026-09-11 09:59:41.382
+Test Case 'BridgeTests.testTheVocabularyComesFromTheAppsOwnTargetTable' passed (0.0 seconds)
+Test Suite 'BridgeTests' passed at 2026-09-11 09:59:41.383
+Executed 6 tests, with 0 failures (0 unexpected) in 0.103 (0.103) seconds
+Test Suite 'CompositionAcceptanceTests' started at 2026-09-11 09:59:41.383
+Test Case 'CompositionAcceptanceTests.testA1TheModuleNeverWritesTheMouthColumnsButDoesReachTheRenderedAperture' started at 2026-09-11 09:59:41.383
 Test Case 'CompositionAcceptanceTests.testA1TheModuleNeverWritesTheMouthColumnsButDoesReachTheRenderedAperture' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testA2ThePressedWeightIsAMouthShapeToo' started at 2026-09-11 09:17:03.020
+Test Case 'CompositionAcceptanceTests.testA2ThePressedWeightIsAMouthShapeToo' started at 2026-09-11 09:59:41.384
 Test Case 'CompositionAcceptanceTests.testA2ThePressedWeightIsAMouthShapeToo' passed (0.0 seconds)
-Test Case 'CompositionAcceptanceTests.testB1WithholdingTheMouthDoesNotBrightenTheRestOfTheFace' started at 2026-09-11 09:17:03.020
+Test Case 'CompositionAcceptanceTests.testB1WithholdingTheMouthDoesNotBrightenTheRestOfTheFace' started at 2026-09-11 09:59:41.384
 Test Case 'CompositionAcceptanceTests.testB1WithholdingTheMouthDoesNotBrightenTheRestOfTheFace' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testB2TheSameHoldsWhenTheSentenceEnds' started at 2026-09-11 09:17:03.021
+Test Case 'CompositionAcceptanceTests.testB2TheSameHoldsWhenTheSentenceEnds' started at 2026-09-11 09:59:41.385
 Test Case 'CompositionAcceptanceTests.testB2TheSameHoldsWhenTheSentenceEnds' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testB3APreemptionDuringSpeechCannotChangeWhichComponentsAreWithheld' started at 2026-09-11 09:17:03.022
-Test Case 'CompositionAcceptanceTests.testB3APreemptionDuringSpeechCannotChangeWhichComponentsAreWithheld' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testB4TheMaskIsConfiguredOnceForTheWholeModule' started at 2026-09-11 09:17:03.023
+Test Case 'CompositionAcceptanceTests.testB3APreemptionDuringSpeechCannotChangeWhichComponentsAreWithheld' started at 2026-09-11 09:59:41.386
+Test Case 'CompositionAcceptanceTests.testB3APreemptionDuringSpeechCannotChangeWhichComponentsAreWithheld' passed (0.0 seconds)
+Test Case 'CompositionAcceptanceTests.testB4TheMaskIsConfiguredOnceForTheWholeModule' started at 2026-09-11 09:59:41.386
 Test Case 'CompositionAcceptanceTests.testB4TheMaskIsConfiguredOnceForTheWholeModule' passed (0.0 seconds)
-Test Case 'CompositionAcceptanceTests.testC1TheApertureComesBackOnExactlyOneRampAfterASentence' started at 2026-09-11 09:17:03.023
+Test Case 'CompositionAcceptanceTests.testC1TheApertureComesBackOnExactlyOneRampAfterASentence' started at 2026-09-11 09:59:41.386
 Test Case 'CompositionAcceptanceTests.testC1TheApertureComesBackOnExactlyOneRampAfterASentence' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testC2ASequenceReleasingAsASentenceEndsProducesABoundedRiseAndFallNotAStep' started at 2026-09-11 09:17:03.024
+Test Case 'CompositionAcceptanceTests.testC2ASequenceReleasingAsASentenceEndsProducesABoundedRiseAndFallNotAStep' started at 2026-09-11 09:59:41.387
 Test Case 'CompositionAcceptanceTests.testC2ASequenceReleasingAsASentenceEndsProducesABoundedRiseAndFallNotAStep' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testC3CancellingDuringTheSentenceAvoidsTheRiseAltogether' started at 2026-09-11 09:17:03.025
+Test Case 'CompositionAcceptanceTests.testC3CancellingDuringTheSentenceAvoidsTheRiseAltogether' started at 2026-09-11 09:59:41.388
 Test Case 'CompositionAcceptanceTests.testC3CancellingDuringTheSentenceAvoidsTheRiseAltogether' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testC4TheModuleAddsNoSecondRampOfItsOwnWhenSpeechStops' started at 2026-09-11 09:17:03.026
+Test Case 'CompositionAcceptanceTests.testC4TheModuleAddsNoSecondRampOfItsOwnWhenSpeechStops' started at 2026-09-11 09:59:41.389
 Test Case 'CompositionAcceptanceTests.testC4TheModuleAddsNoSecondRampOfItsOwnWhenSpeechStops' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testD1PreemptingAPartedSequenceWithASmileMovesTheApertureWithoutAStep' started at 2026-09-11 09:17:03.027
+Test Case 'CompositionAcceptanceTests.testD1PreemptingAPartedSequenceWithASmileMovesTheApertureWithoutAStep' started at 2026-09-11 09:59:41.390
 Test Case 'CompositionAcceptanceTests.testD1PreemptingAPartedSequenceWithASmileMovesTheApertureWithoutAStep' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testD2CancellingAPressedSequenceReleasesTheLipsWithoutAStep' started at 2026-09-11 09:17:03.028
+Test Case 'CompositionAcceptanceTests.testD2CancellingAPressedSequenceReleasesTheLipsWithoutAStep' started at 2026-09-11 09:59:41.390
 Test Case 'CompositionAcceptanceTests.testD2CancellingAPressedSequenceReleasesTheLipsWithoutAStep' passed (0.001 seconds)
-Test Case 'CompositionAcceptanceTests.testD3AChainOfInterruptionsDuringASentenceNeverSteps' started at 2026-09-11 09:17:03.028
+Test Case 'CompositionAcceptanceTests.testD3AChainOfInterruptionsDuringASentenceNeverSteps' started at 2026-09-11 09:59:41.391
 Test Case 'CompositionAcceptanceTests.testD3AChainOfInterruptionsDuringASentenceNeverSteps' passed (0.003 seconds)
-Test Case 'CompositionAcceptanceTests.testD4TheApertureStepsOnlyWhenTheSpeechSourceItselfSteps' started at 2026-09-11 09:17:03.031
+Test Case 'CompositionAcceptanceTests.testD4TheApertureStepsOnlyWhenTheSpeechSourceItselfSteps' started at 2026-09-11 09:59:41.394
 Test Case 'CompositionAcceptanceTests.testD4TheApertureStepsOnlyWhenTheSpeechSourceItselfSteps' passed (0.003 seconds)
-Test Case 'CompositionAcceptanceTests.testE1TheBudgetHoldsAcrossEveryBaseOverlayAndMaskCombination' started at 2026-09-11 09:17:03.035
-Test Case 'CompositionAcceptanceTests.testE1TheBudgetHoldsAcrossEveryBaseOverlayAndMaskCombination' passed (0.032 seconds)
-Test Suite 'CompositionAcceptanceTests' passed at 2026-09-11 09:17:03.067
-	 Executed 15 tests, with 0 failures (0 unexpected) in 0.048 (0.048) seconds
-Test Suite 'RenderLoopTests' started at 2026-09-11 09:17:03.067
-Test Case 'RenderLoopTests.testABlinkRequestReachesTheAppsOwnBlinkClock' started at 2026-09-11 09:17:03.067
-Test Case 'RenderLoopTests.testABlinkRequestReachesTheAppsOwnBlinkClock' passed (0.0 seconds)
-Test Case 'RenderLoopTests.testAManualExpressionStillTransitionsWithIdleOffAndThenStopsTheTimer' started at 2026-09-11 09:17:03.067
+Test Case 'CompositionAcceptanceTests.testE1TheBudgetHoldsAcrossEveryBaseOverlayAndMaskCombination' started at 2026-09-11 09:59:41.397
+Test Case 'CompositionAcceptanceTests.testE1TheBudgetHoldsAcrossEveryBaseOverlayAndMaskCombination' passed (0.025 seconds)
+Test Suite 'CompositionAcceptanceTests' passed at 2026-09-11 09:59:41.422
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.039 (0.039) seconds
+Test Suite 'RenderLoopTests' started at 2026-09-11 09:59:41.422
+Test Case 'RenderLoopTests.testABlinkRequestReachesTheAppsOwnBlinkClock' started at 2026-09-11 09:59:41.422
+Test Case 'RenderLoopTests.testABlinkRequestReachesTheAppsOwnBlinkClock' passed (0.001 seconds)
+Test Case 'RenderLoopTests.testAManualExpressionStillTransitionsWithIdleOffAndThenStopsTheTimer' started at 2026-09-11 09:59:41.423
 Test Case 'RenderLoopTests.testAManualExpressionStillTransitionsWithIdleOffAndThenStopsTheTimer' passed (0.0 seconds)
-Test Case 'RenderLoopTests.testARunningSequenceLeavesTheRenderedApertureIdenticalToARunWithoutOne' started at 2026-09-11 09:17:03.068
+Test Case 'RenderLoopTests.testARunningSequenceLeavesTheRenderedApertureIdenticalToARunWithoutOne' started at 2026-09-11 09:59:41.423
 Test Case 'RenderLoopTests.testARunningSequenceLeavesTheRenderedApertureIdenticalToARunWithoutOne' passed (0.004 seconds)
-Test Case 'RenderLoopTests.testASequenceLayersOnTopOfAManualExpressionWithoutOverwritingIt' started at 2026-09-11 09:17:03.072
+Test Case 'RenderLoopTests.testASequenceLayersOnTopOfAManualExpressionWithoutOverwritingIt' started at 2026-09-11 09:59:41.427
 Test Case 'RenderLoopTests.testASequenceLayersOnTopOfAManualExpressionWithoutOverwritingIt' passed (0.001 seconds)
-Test Case 'RenderLoopTests.testASmileSurvivesTheSentenceWhileThePartedWeightDoesNot' started at 2026-09-11 09:17:03.073
+Test Case 'RenderLoopTests.testASmileSurvivesTheSentenceWhileThePartedWeightDoesNot' started at 2026-09-11 09:59:41.428
 Test Case 'RenderLoopTests.testASmileSurvivesTheSentenceWhileThePartedWeightDoesNot' passed (0.001 seconds)
-Test Case 'RenderLoopTests.testAnEyeRestBeatFadesTheAutomaticBlinkOutInTheRenderedFrame' started at 2026-09-11 09:17:03.074
+Test Case 'RenderLoopTests.testAnEyeRestBeatFadesTheAutomaticBlinkOutInTheRenderedFrame' started at 2026-09-11 09:59:41.429
 Test Case 'RenderLoopTests.testAnEyeRestBeatFadesTheAutomaticBlinkOutInTheRenderedFrame' passed (0.001 seconds)
-Test Case 'RenderLoopTests.testBilabialClosuresAndSilentGapsInsideASentenceStayClosed' started at 2026-09-11 09:17:03.074
+Test Case 'RenderLoopTests.testBilabialClosuresAndSilentGapsInsideASentenceStayClosed' started at 2026-09-11 09:59:41.429
 Test Case 'RenderLoopTests.testBilabialClosuresAndSilentGapsInsideASentenceStayClosed' passed (0.0 seconds)
-Test Case 'RenderLoopTests.testEveryRenderedFrameStaysInsideTheRenderersExpectations' started at 2026-09-11 09:17:03.075
-Test Case 'RenderLoopTests.testEveryRenderedFrameStaysInsideTheRenderersExpectations' passed (0.006 seconds)
-Test Case 'RenderLoopTests.testHidingAndResumingLeavesTheFirstVisibleFrameOnTheHostPose' started at 2026-09-11 09:17:03.080
+Test Case 'RenderLoopTests.testEveryRenderedFrameStaysInsideTheRenderersExpectations' started at 2026-09-11 09:59:41.430
+Test Case 'RenderLoopTests.testEveryRenderedFrameStaysInsideTheRenderersExpectations' passed (0.005 seconds)
+Test Case 'RenderLoopTests.testHidingAndResumingLeavesTheFirstVisibleFrameOnTheHostPose' started at 2026-09-11 09:59:41.434
 Test Case 'RenderLoopTests.testHidingAndResumingLeavesTheFirstVisibleFrameOnTheHostPose' passed (0.001 seconds)
-Test Case 'RenderLoopTests.testRestMouthReturnRemainsTheOnlyOwnerOfTheApertureComingBack' started at 2026-09-11 09:17:03.081
+Test Case 'RenderLoopTests.testRestMouthReturnRemainsTheOnlyOwnerOfTheApertureComingBack' started at 2026-09-11 09:59:41.435
 Test Case 'RenderLoopTests.testRestMouthReturnRemainsTheOnlyOwnerOfTheApertureComingBack' passed (0.0 seconds)
-Test Case 'RenderLoopTests.testTheModuleNeverAltersTheMouthColumnsOfAFrame' started at 2026-09-11 09:17:03.082
+Test Case 'RenderLoopTests.testTheModuleNeverAltersTheMouthColumnsOfAFrame' started at 2026-09-11 09:59:41.435
 Test Case 'RenderLoopTests.testTheModuleNeverAltersTheMouthColumnsOfAFrame' passed (0.003 seconds)
-Test Case 'RenderLoopTests.testTheTimerTermGoesBackToFalseAfterASequenceEndsWithIdleOff' started at 2026-09-11 09:17:03.085
+Test Case 'RenderLoopTests.testTheTimerTermGoesBackToFalseAfterASequenceEndsWithIdleOff' started at 2026-09-11 09:59:41.438
 Test Case 'RenderLoopTests.testTheTimerTermGoesBackToFalseAfterASequenceEndsWithIdleOff' passed (0.001 seconds)
-Test Suite 'RenderLoopTests' passed at 2026-09-11 09:17:03.086
-	 Executed 12 tests, with 0 failures (0 unexpected) in 0.019 (0.019) seconds
-Test Suite 'ArbitrationTests' started at 2026-09-11 09:17:03.086
-Test Case 'ArbitrationTests.testALowerPriorityRequestIsRefusedRatherThanTakingTurns' started at 2026-09-11 09:17:03.086
+Test Suite 'RenderLoopTests' passed at 2026-09-11 09:59:41.439
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.016 (0.016) seconds
+Test Suite 'ArbitrationTests' started at 2026-09-11 09:59:41.439
+Test Case 'ArbitrationTests.testALowerPriorityRequestIsRefusedRatherThanTakingTurns' started at 2026-09-11 09:59:41.439
 Test Case 'ArbitrationTests.testALowerPriorityRequestIsRefusedRatherThanTakingTurns' passed (0.001 seconds)
-Test Case 'ArbitrationTests.testAQueuedSequenceWaitsAndThenStartsFromTheVisiblePose' started at 2026-09-11 09:17:03.087
-Test Case 'ArbitrationTests.testAQueuedSequenceWaitsAndThenStartsFromTheVisiblePose' passed (0.001 seconds)
-Test Case 'ArbitrationTests.testASequenceNeverLeavesAStandingOverlayBehind' started at 2026-09-11 09:17:03.088
-Test Case 'ArbitrationTests.testASequenceNeverLeavesAStandingOverlayBehind' passed (0.001 seconds)
-Test Case 'ArbitrationTests.testAThreeBeatSequenceReachesItsPoseAndReturnsToTheBase' started at 2026-09-11 09:17:03.088
-Test Case 'ArbitrationTests.testAThreeBeatSequenceReachesItsPoseAndReturnsToTheBase' passed (0.001 seconds)
-Test Case 'ArbitrationTests.testAnEndlessSequenceKeepsRunningUntilSomethingStopsIt' started at 2026-09-11 09:17:03.089
+Test Case 'ArbitrationTests.testAQueuedSequenceWaitsAndThenStartsFromTheVisiblePose' started at 2026-09-11 09:59:41.440
+Test Case 'ArbitrationTests.testAQueuedSequenceWaitsAndThenStartsFromTheVisiblePose' passed (0.0 seconds)
+Test Case 'ArbitrationTests.testASequenceNeverLeavesAStandingOverlayBehind' started at 2026-09-11 09:59:41.440
+Test Case 'ArbitrationTests.testASequenceNeverLeavesAStandingOverlayBehind' passed (0.0 seconds)
+Test Case 'ArbitrationTests.testAThreeBeatSequenceReachesItsPoseAndReturnsToTheBase' started at 2026-09-11 09:59:41.440
+Test Case 'ArbitrationTests.testAThreeBeatSequenceReachesItsPoseAndReturnsToTheBase' passed (0.0 seconds)
+Test Case 'ArbitrationTests.testAnEndlessSequenceKeepsRunningUntilSomethingStopsIt' started at 2026-09-11 09:59:41.441
 Test Case 'ArbitrationTests.testAnEndlessSequenceKeepsRunningUntilSomethingStopsIt' passed (0.001 seconds)
-Test Case 'ArbitrationTests.testAnInterruptionContinuesFromTheVisiblePoseInsteadOfSnappingToNatural' started at 2026-09-11 09:17:03.090
+Test Case 'ArbitrationTests.testAnInterruptionContinuesFromTheVisiblePoseInsteadOfSnappingToNatural' started at 2026-09-11 09:59:41.442
 Test Case 'ArbitrationTests.testAnInterruptionContinuesFromTheVisiblePoseInsteadOfSnappingToNatural' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testCancelAllClearsTheRunningSequenceAndTheQueue' started at 2026-09-11 09:17:03.090
+Test Case 'ArbitrationTests.testCancelAllClearsTheRunningSequenceAndTheQueue' started at 2026-09-11 09:59:41.442
 Test Case 'ArbitrationTests.testCancelAllClearsTheRunningSequenceAndTheQueue' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testCancellingReleasesFromTheVisiblePoseAndNeverViaNaturalFirst' started at 2026-09-11 09:17:03.091
+Test Case 'ArbitrationTests.testCancellingReleasesFromTheVisiblePoseAndNeverViaNaturalFirst' started at 2026-09-11 09:59:41.442
 Test Case 'ArbitrationTests.testCancellingReleasesFromTheVisiblePoseAndNeverViaNaturalFirst' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testEqualPriorityHandsTheChannelToTheNewerRequest' started at 2026-09-11 09:17:03.091
+Test Case 'ArbitrationTests.testEqualPriorityHandsTheChannelToTheNewerRequest' started at 2026-09-11 09:59:41.443
 Test Case 'ArbitrationTests.testEqualPriorityHandsTheChannelToTheNewerRequest' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testRejectIfBusyNeverInterrupts' started at 2026-09-11 09:17:03.092
+Test Case 'ArbitrationTests.testRejectIfBusyNeverInterrupts' started at 2026-09-11 09:59:41.443
 Test Case 'ArbitrationTests.testRejectIfBusyNeverInterrupts' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testRepeatedSequencesRunTheStatedNumberOfTimes' started at 2026-09-11 09:17:03.092
+Test Case 'ArbitrationTests.testRepeatedSequencesRunTheStatedNumberOfTimes' started at 2026-09-11 09:59:41.443
 Test Case 'ArbitrationTests.testRepeatedSequencesRunTheStatedNumberOfTimes' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testReversingBackToTheOriginalPoseMidBlendIsAlsoContinuous' started at 2026-09-11 09:17:03.092
+Test Case 'ArbitrationTests.testReversingBackToTheOriginalPoseMidBlendIsAlsoContinuous' started at 2026-09-11 09:59:41.444
 Test Case 'ArbitrationTests.testReversingBackToTheOriginalPoseMidBlendIsAlsoContinuous' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testTheQueueIsBoundedAndSaysSoRatherThanGrowing' started at 2026-09-11 09:17:03.093
+Test Case 'ArbitrationTests.testTheQueueIsBoundedAndSaysSoRatherThanGrowing' started at 2026-09-11 09:59:41.444
 Test Case 'ArbitrationTests.testTheQueueIsBoundedAndSaysSoRatherThanGrowing' passed (0.0 seconds)
-Test Case 'ArbitrationTests.testTheQueueOrdersByPriorityAndThenByArrival' started at 2026-09-11 09:17:03.093
+Test Case 'ArbitrationTests.testTheQueueOrdersByPriorityAndThenByArrival' started at 2026-09-11 09:59:41.444
 Test Case 'ArbitrationTests.testTheQueueOrdersByPriorityAndThenByArrival' passed (0.001 seconds)
-Test Case 'ArbitrationTests.testTheTimerTermIsTrueOnlyWhileTheModuleHasSomethingToDo' started at 2026-09-11 09:17:03.094
+Test Case 'ArbitrationTests.testTheTimerTermIsTrueOnlyWhileTheModuleHasSomethingToDo' started at 2026-09-11 09:59:41.445
 Test Case 'ArbitrationTests.testTheTimerTermIsTrueOnlyWhileTheModuleHasSomethingToDo' passed (0.001 seconds)
-Test Suite 'ArbitrationTests' passed at 2026-09-11 09:17:03.094
-Executed 15 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
-Test Suite 'DeterminismTests' started at 2026-09-11 09:17:03.094
-Test Case 'DeterminismTests.testADifferentSeedProducesADifferentIdleSchedule' started at 2026-09-11 09:17:03.094
-Test Case 'DeterminismTests.testADifferentSeedProducesADifferentIdleSchedule' passed (0.017 seconds)
-Test Case 'DeterminismTests.testARangeWithBadBoundsDegradesInsteadOfTrapping' started at 2026-09-11 09:17:03.111
+Test Suite 'ArbitrationTests' passed at 2026-09-11 09:59:41.446
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'DeterminismTests' started at 2026-09-11 09:59:41.446
+Test Case 'DeterminismTests.testADifferentSeedProducesADifferentIdleSchedule' started at 2026-09-11 09:59:41.446
+Test Case 'DeterminismTests.testADifferentSeedProducesADifferentIdleSchedule' passed (0.014 seconds)
+Test Case 'DeterminismTests.testARangeWithBadBoundsDegradesInsteadOfTrapping' started at 2026-09-11 09:59:41.460
 Test Case 'DeterminismTests.testARangeWithBadBoundsDegradesInsteadOfTrapping' passed (0.0 seconds)
-Test Case 'DeterminismTests.testIdleBehaviourActuallyFiresSoTheDeterminismCheckIsNotVacuous' started at 2026-09-11 09:17:03.112
-Test Case 'DeterminismTests.testIdleBehaviourActuallyFiresSoTheDeterminismCheckIsNotVacuous' passed (0.008 seconds)
-Test Case 'DeterminismTests.testJitterIsSeededSoARepeatedSequenceStillReproduces' started at 2026-09-11 09:17:03.120
-Test Case 'DeterminismTests.testJitterIsSeededSoARepeatedSequenceStillReproduces' passed (0.003 seconds)
-Test Case 'DeterminismTests.testTheGeneratorIsStableAcrossProcessesAndNotTheStandardLibraryHash' started at 2026-09-11 09:17:03.123
+Test Case 'DeterminismTests.testIdleBehaviourActuallyFiresSoTheDeterminismCheckIsNotVacuous' started at 2026-09-11 09:59:41.460
+Test Case 'DeterminismTests.testIdleBehaviourActuallyFiresSoTheDeterminismCheckIsNotVacuous' passed (0.007 seconds)
+Test Case 'DeterminismTests.testJitterIsSeededSoARepeatedSequenceStillReproduces' started at 2026-09-11 09:59:41.468
+Test Case 'DeterminismTests.testJitterIsSeededSoARepeatedSequenceStillReproduces' passed (0.002 seconds)
+Test Case 'DeterminismTests.testTheGeneratorIsStableAcrossProcessesAndNotTheStandardLibraryHash' started at 2026-09-11 09:59:41.470
 Test Case 'DeterminismTests.testTheGeneratorIsStableAcrossProcessesAndNotTheStandardLibraryHash' passed (0.0 seconds)
-Test Case 'DeterminismTests.testTheSameSeedAndTheSameTimeStepsReproduceEveryFrame' started at 2026-09-11 09:17:03.123
-Test Case 'DeterminismTests.testTheSameSeedAndTheSameTimeStepsReproduceEveryFrame' passed (0.057 seconds)
-Test Case 'DeterminismTests.testUnitIntervalStaysInsideItsRange' started at 2026-09-11 09:17:03.179
+Test Case 'DeterminismTests.testTheSameSeedAndTheSameTimeStepsReproduceEveryFrame' started at 2026-09-11 09:59:41.470
+Test Case 'DeterminismTests.testTheSameSeedAndTheSameTimeStepsReproduceEveryFrame' passed (0.05 seconds)
+Test Case 'DeterminismTests.testUnitIntervalStaysInsideItsRange' started at 2026-09-11 09:59:41.520
 Test Case 'DeterminismTests.testUnitIntervalStaysInsideItsRange' passed (0.001 seconds)
-Test Suite 'DeterminismTests' passed at 2026-09-11 09:17:03.180
-	 Executed 7 tests, with 0 failures (0 unexpected) in 0.086 (0.086) seconds
-Test Suite 'LifecycleTests' started at 2026-09-11 09:17:03.180
-Test Case 'LifecycleTests.testALargeTimeStepCancelsWorkAndFadesBackWithoutAJumpOrABacklog' started at 2026-09-11 09:17:03.180
+Test Suite 'DeterminismTests' passed at 2026-09-11 09:59:41.521
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.075 (0.075) seconds
+Test Suite 'LifecycleTests' started at 2026-09-11 09:59:41.521
+Test Case 'LifecycleTests.testALargeTimeStepCancelsWorkAndFadesBackWithoutAJumpOrABacklog' started at 2026-09-11 09:59:41.521
 Test Case 'LifecycleTests.testALargeTimeStepCancelsWorkAndFadesBackWithoutAJumpOrABacklog' passed (0.001 seconds)
-Test Case 'LifecycleTests.testASequenceSubmittedWhileHiddenIsRefusedRatherThanBanked' started at 2026-09-11 09:17:03.181
-Test Case 'LifecycleTests.testASequenceSubmittedWhileHiddenIsRefusedRatherThanBanked' passed (0.0 seconds)
-Test Case 'LifecycleTests.testAnAmbientSequenceIsRefusedOutrightWhileIdleIsOff' started at 2026-09-11 09:17:03.182
+Test Case 'LifecycleTests.testASequenceSubmittedWhileHiddenIsRefusedRatherThanBanked' started at 2026-09-11 09:59:41.521
+Test Case 'LifecycleTests.testASequenceSubmittedWhileHiddenIsRefusedRatherThanBanked' passed (0.001 seconds)
+Test Case 'LifecycleTests.testAnAmbientSequenceIsRefusedOutrightWhileIdleIsOff' started at 2026-09-11 09:59:41.522
 Test Case 'LifecycleTests.testAnAmbientSequenceIsRefusedOutrightWhileIdleIsOff' passed (0.0 seconds)
-Test Case 'LifecycleTests.testHidingDropsTheOverlayInTheSameCallBecauseNothingIsOnScreen' started at 2026-09-11 09:17:03.182
+Test Case 'LifecycleTests.testHidingDropsTheOverlayInTheSameCallBecauseNothingIsOnScreen' started at 2026-09-11 09:59:41.522
 Test Case 'LifecycleTests.testHidingDropsTheOverlayInTheSameCallBecauseNothingIsOnScreen' passed (0.0 seconds)
-Test Case 'LifecycleTests.testIdleBehaviourDoesNotFireImmediatelyAfterAResume' started at 2026-09-11 09:17:03.182
+Test Case 'LifecycleTests.testIdleBehaviourDoesNotFireImmediatelyAfterAResume' started at 2026-09-11 09:59:41.523
 Test Case 'LifecycleTests.testIdleBehaviourDoesNotFireImmediatelyAfterAResume' passed (0.004 seconds)
-Test Case 'LifecycleTests.testIdleBehaviourStaysOutOfTheWayWhileASentencePlays' started at 2026-09-11 09:17:03.186
-Test Case 'LifecycleTests.testIdleBehaviourStaysOutOfTheWayWhileASentencePlays' passed (0.016 seconds)
-Test Case 'LifecycleTests.testResetLeavesACleanDirector' started at 2026-09-11 09:17:03.203
+Test Case 'LifecycleTests.testIdleBehaviourStaysOutOfTheWayWhileASentencePlays' started at 2026-09-11 09:59:41.526
+Test Case 'LifecycleTests.testIdleBehaviourStaysOutOfTheWayWhileASentencePlays' passed (0.015 seconds)
+Test Case 'LifecycleTests.testReEnablingIdleAfterALongPauseDoesNotFireABacklog' started at 2026-09-11 09:59:41.541
+Test Case 'LifecycleTests.testReEnablingIdleAfterALongPauseDoesNotFireABacklog' passed (0.025 seconds)
+Test Case 'LifecycleTests.testResetLeavesACleanDirector' started at 2026-09-11 09:59:41.567
 Test Case 'LifecycleTests.testResetLeavesACleanDirector' passed (0.0 seconds)
-Test Case 'LifecycleTests.testResumingStartsFromTheHostPoseAndAsksForNoFramesOfItsOwn' started at 2026-09-11 09:17:03.203
+Test Case 'LifecycleTests.testResumingStartsFromTheHostPoseAndAsksForNoFramesOfItsOwn' started at 2026-09-11 09:59:41.567
 Test Case 'LifecycleTests.testResumingStartsFromTheHostPoseAndAsksForNoFramesOfItsOwn' passed (0.0 seconds)
-Test Case 'LifecycleTests.testTurningIdleOffReleasesAnIdleSequenceThatIsAlreadyRunning' started at 2026-09-11 09:17:03.203
+Test Case 'LifecycleTests.testTurningIdleOffReleasesAnIdleSequenceThatIsAlreadyRunning' started at 2026-09-11 09:59:41.567
 Test Case 'LifecycleTests.testTurningIdleOffReleasesAnIdleSequenceThatIsAlreadyRunning' passed (0.005 seconds)
-Test Case 'LifecycleTests.testTurningIdleOffStopsSelfScheduledBehaviourButNotExplicitCommands' started at 2026-09-11 09:17:03.208
+Test Case 'LifecycleTests.testTurningIdleOffStopsSelfScheduledBehaviourButNotExplicitCommands' started at 2026-09-11 09:59:41.572
 Test Case 'LifecycleTests.testTurningIdleOffStopsSelfScheduledBehaviourButNotExplicitCommands' passed (0.008 seconds)
-Test Case 'LifecycleTests.testWhileHiddenTheComposedPoseIsExactlyWhateverTheHostIsShowing' started at 2026-09-11 09:17:03.217
+Test Case 'LifecycleTests.testWhileHiddenTheComposedPoseIsExactlyWhateverTheHostIsShowing' started at 2026-09-11 09:59:41.580
 Test Case 'LifecycleTests.testWhileHiddenTheComposedPoseIsExactlyWhateverTheHostIsShowing' passed (0.0 seconds)
-Test Suite 'LifecycleTests' passed at 2026-09-11 09:17:03.217
-	 Executed 11 tests, with 0 failures (0 unexpected) in 0.036 (0.036) seconds
-Test Suite 'PoseWeightsTests' started at 2026-09-11 09:17:03.217
-Test Case 'PoseWeightsTests.testAFullStrengthOverlayIsACrossFadeRatherThanAnAddition' started at 2026-09-11 09:17:03.217
+Test Suite 'LifecycleTests' passed at 2026-09-11 09:59:41.580
+Executed 12 tests, with 0 failures (0 unexpected) in 0.059 (0.059) seconds
+Test Suite 'PoseWeightsTests' started at 2026-09-11 09:59:41.580
+Test Case 'PoseWeightsTests.testAFullStrengthOverlayIsACrossFadeRatherThanAnAddition' started at 2026-09-11 09:59:41.580
 Test Case 'PoseWeightsTests.testAFullStrengthOverlayIsACrossFadeRatherThanAnAddition' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testAZeroOverlayLeavesTheBaseExactlyAsItWas' started at 2026-09-11 09:17:03.217
+Test Case 'PoseWeightsTests.testAZeroOverlayLeavesTheBaseExactlyAsItWas' started at 2026-09-11 09:59:41.581
 Test Case 'PoseWeightsTests.testAZeroOverlayLeavesTheBaseExactlyAsItWas' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testBlendRejectsNonFiniteProgressInsteadOfPropagatingIt' started at 2026-09-11 09:17:03.217
+Test Case 'PoseWeightsTests.testBlendRejectsNonFiniteProgressInsteadOfPropagatingIt' started at 2026-09-11 09:59:41.581
 Test Case 'PoseWeightsTests.testBlendRejectsNonFiniteProgressInsteadOfPropagatingIt' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testBundledVocabularyMatchesTheShippedTargetTable' started at 2026-09-11 09:17:03.218
+Test Case 'PoseWeightsTests.testBundledVocabularyMatchesTheShippedTargetTable' started at 2026-09-11 09:59:41.581
 Test Case 'PoseWeightsTests.testBundledVocabularyMatchesTheShippedTargetTable' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testEasingMatchesTheShippedSmoothStepShape' started at 2026-09-11 09:17:03.218
+Test Case 'PoseWeightsTests.testEasingMatchesTheShippedSmoothStepShape' started at 2026-09-11 09:59:41.581
 Test Case 'PoseWeightsTests.testEasingMatchesTheShippedSmoothStepShape' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testLayeringIsContinuousSoARampCannotProduceAVisibleStep' started at 2026-09-11 09:17:03.218
+Test Case 'PoseWeightsTests.testLayeringIsContinuousSoARampCannotProduceAVisibleStep' started at 2026-09-11 09:59:41.582
 Test Case 'PoseWeightsTests.testLayeringIsContinuousSoARampCannotProduceAVisibleStep' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testLayeringKeepsTheRendererWeightBudgetForEveryPairOfExpressions' started at 2026-09-11 09:17:03.218
-Test Case 'PoseWeightsTests.testLayeringKeepsTheRendererWeightBudgetForEveryPairOfExpressions' passed (0.002 seconds)
-Test Case 'PoseWeightsTests.testMaskingZeroesOnlyTheNamedComponents' started at 2026-09-11 09:17:03.220
+Test Case 'PoseWeightsTests.testLayeringKeepsTheRendererWeightBudgetForEveryPairOfExpressions' started at 2026-09-11 09:59:41.582
+Test Case 'PoseWeightsTests.testLayeringKeepsTheRendererWeightBudgetForEveryPairOfExpressions' passed (0.001 seconds)
+Test Case 'PoseWeightsTests.testMaskingZeroesOnlyTheNamedComponents' started at 2026-09-11 09:59:41.583
 Test Case 'PoseWeightsTests.testMaskingZeroesOnlyTheNamedComponents' passed (0.0 seconds)
-Test Case 'PoseWeightsTests.testNonFiniteAndOutOfRangeInputsAreNeutralised' started at 2026-09-11 09:17:03.220
+Test Case 'PoseWeightsTests.testNonFiniteAndOutOfRangeInputsAreNeutralised' started at 2026-09-11 09:59:41.584
 Test Case 'PoseWeightsTests.testNonFiniteAndOutOfRangeInputsAreNeutralised' passed (0.0 seconds)
-Test Suite 'PoseWeightsTests' passed at 2026-09-11 09:17:03.220
+Test Suite 'PoseWeightsTests' passed at 2026-09-11 09:59:41.584
 Executed 9 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
-Test Suite 'RobustnessTests' started at 2026-09-11 09:17:03.221
-Test Case 'RobustnessTests.testAHostClockThatGoesBackwardsIsAbsorbed' started at 2026-09-11 09:17:03.221
+Test Suite 'RobustnessTests' started at 2026-09-11 09:59:41.584
+Test Case 'RobustnessTests.testAHostClockThatGoesBackwardsIsAbsorbed' started at 2026-09-11 09:59:41.584
 Test Case 'RobustnessTests.testAHostClockThatGoesBackwardsIsAbsorbed' passed (0.0 seconds)
-Test Case 'RobustnessTests.testANonFiniteBasePoseOrBlinkIsNeutralisedRatherThanPropagated' started at 2026-09-11 09:17:03.221
+Test Case 'RobustnessTests.testANonFiniteBasePoseOrBlinkIsNeutralisedRatherThanPropagated' started at 2026-09-11 09:59:41.584
 Test Case 'RobustnessTests.testANonFiniteBasePoseOrBlinkIsNeutralisedRatherThanPropagated' passed (0.0 seconds)
-Test Case 'RobustnessTests.testANonFiniteHostClockNeitherCorruptsStateNorReachesTheOutput' started at 2026-09-11 09:17:03.221
+Test Case 'RobustnessTests.testANonFiniteHostClockNeitherCorruptsStateNorReachesTheOutput' started at 2026-09-11 09:59:41.584
 Test Case 'RobustnessTests.testANonFiniteHostClockNeitherCorruptsStateNorReachesTheOutput' passed (0.0 seconds)
-Test Case 'RobustnessTests.testARealisticHostBasePoseAlwaysKeepsTheBudgetUnderOne' started at 2026-09-11 09:17:03.221
-Test Case 'RobustnessTests.testARealisticHostBasePoseAlwaysKeepsTheBudgetUnderOne' passed (0.03 seconds)
-Test Case 'RobustnessTests.testAZeroBlendStepAppliesItsPoseOnTheFrameItStarts' started at 2026-09-11 09:17:03.252
+Test Case 'RobustnessTests.testARealisticHostBasePoseAlwaysKeepsTheBudgetUnderOne' started at 2026-09-11 09:59:41.585
+Test Case 'RobustnessTests.testARealisticHostBasePoseAlwaysKeepsTheBudgetUnderOne' passed (0.024 seconds)
+Test Case 'RobustnessTests.testAZeroBlendStepAppliesItsPoseOnTheFrameItStarts' started at 2026-09-11 09:59:41.609
 Test Case 'RobustnessTests.testAZeroBlendStepAppliesItsPoseOnTheFrameItStarts' passed (0.0 seconds)
-Test Case 'RobustnessTests.testEveryFrameOfAHostileRunStaysFiniteAndInsideTheRendererBudget' started at 2026-09-11 09:17:03.252
-Test Case 'RobustnessTests.testEveryFrameOfAHostileRunStaysFiniteAndInsideTheRendererBudget' passed (0.034 seconds)
-Test Case 'RobustnessTests.testRepeatedUpdatesAtTheSameTimestampAreIdempotent' started at 2026-09-11 09:17:03.287
+Test Case 'RobustnessTests.testEveryFrameOfAHostileRunStaysFiniteAndInsideTheRendererBudget' started at 2026-09-11 09:59:41.609
+Test Case 'RobustnessTests.testEveryFrameOfAHostileRunStaysFiniteAndInsideTheRendererBudget' passed (0.03 seconds)
+Test Case 'RobustnessTests.testRepeatedUpdatesAtTheSameTimestampAreIdempotent' started at 2026-09-11 09:59:41.638
 Test Case 'RobustnessTests.testRepeatedUpdatesAtTheSameTimestampAreIdempotent' passed (0.0 seconds)
-Test Case 'RobustnessTests.testTheDirectorHasNoClockOfItsOwn' started at 2026-09-11 09:17:03.287
-Test Case 'RobustnessTests.testTheDirectorHasNoClockOfItsOwn' passed (0.052 seconds)
-Test Case 'RobustnessTests.testZeroLengthStepsResolveInOneFrameWithoutSpinning' started at 2026-09-11 09:17:03.339
+Test Case 'RobustnessTests.testTheDirectorHasNoClockOfItsOwn' started at 2026-09-11 09:59:41.639
+Test Case 'RobustnessTests.testTheDirectorHasNoClockOfItsOwn' passed (0.051 seconds)
+Test Case 'RobustnessTests.testZeroLengthStepsResolveInOneFrameWithoutSpinning' started at 2026-09-11 09:59:41.690
 Test Case 'RobustnessTests.testZeroLengthStepsResolveInOneFrameWithoutSpinning' passed (0.0 seconds)
-Test Suite 'RobustnessTests' passed at 2026-09-11 09:17:03.339
-Executed 9 tests, with 0 failures (0 unexpected) in 0.118 (0.118) seconds
-Test Suite 'SequenceValidationTests' started at 2026-09-11 09:17:03.339
-Test Case 'SequenceValidationTests.testAZeroLengthEndlessSequenceIsRefusedBecauseItCouldNotAdvance' started at 2026-09-11 09:17:03.339
+Test Suite 'RobustnessTests' passed at 2026-09-11 09:59:41.690
+Executed 9 tests, with 0 failures (0 unexpected) in 0.106 (0.106) seconds
+Test Suite 'SequenceValidationTests' started at 2026-09-11 09:59:41.691
+Test Case 'SequenceValidationTests.testAZeroLengthEndlessSequenceIsRefusedBecauseItCouldNotAdvance' started at 2026-09-11 09:59:41.691
 Test Case 'SequenceValidationTests.testAZeroLengthEndlessSequenceIsRefusedBecauseItCouldNotAdvance' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testAnOverlongSequenceIsRefused' started at 2026-09-11 09:17:03.339
+Test Case 'SequenceValidationTests.testAnOverlongSequenceIsRefused' started at 2026-09-11 09:59:41.691
 Test Case 'SequenceValidationTests.testAnOverlongSequenceIsRefused' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testNonFiniteTimingIsRefusedInsteadOfSilentlyBecomingZero' started at 2026-09-11 09:17:03.340
+Test Case 'SequenceValidationTests.testNonFiniteTimingIsRefusedInsteadOfSilentlyBecomingZero' started at 2026-09-11 09:59:41.691
 Test Case 'SequenceValidationTests.testNonFiniteTimingIsRefusedInsteadOfSilentlyBecomingZero' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testOutOfRangeNumbersAreClampedIntoTheDocumentedLimits' started at 2026-09-11 09:17:03.340
+Test Case 'SequenceValidationTests.testOutOfRangeNumbersAreClampedIntoTheDocumentedLimits' started at 2026-09-11 09:59:41.691
 Test Case 'SequenceValidationTests.testOutOfRangeNumbersAreClampedIntoTheDocumentedLimits' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testRepeatCountAndJitterRangesAreClamped' started at 2026-09-11 09:17:03.340
+Test Case 'SequenceValidationTests.testRepeatCountAndJitterRangesAreClamped' started at 2026-09-11 09:59:41.691
 Test Case 'SequenceValidationTests.testRepeatCountAndJitterRangesAreClamped' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testStepDurationIsBlendPlusHold' started at 2026-09-11 09:17:03.340
+Test Case 'SequenceValidationTests.testStepDurationIsBlendPlusHold' started at 2026-09-11 09:59:41.692
 Test Case 'SequenceValidationTests.testStepDurationIsBlendPlusHold' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testStructuralProblemsAreRefusedRatherThanGuessedAt' started at 2026-09-11 09:17:03.341
+Test Case 'SequenceValidationTests.testStructuralProblemsAreRefusedRatherThanGuessedAt' started at 2026-09-11 09:59:41.692
 Test Case 'SequenceValidationTests.testStructuralProblemsAreRefusedRatherThanGuessedAt' passed (0.0 seconds)
-Test Case 'SequenceValidationTests.testTheDirectorRefusesAnInvalidSequenceAtSubmissionTime' started at 2026-09-11 09:17:03.341
+Test Case 'SequenceValidationTests.testTheDirectorRefusesAnInvalidSequenceAtSubmissionTime' started at 2026-09-11 09:59:41.692
 Test Case 'SequenceValidationTests.testTheDirectorRefusesAnInvalidSequenceAtSubmissionTime' passed (0.0 seconds)
-Test Suite 'SequenceValidationTests' passed at 2026-09-11 09:17:03.342
-Executed 8 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
-Test Suite 'SpeechAndBlinkTests' started at 2026-09-11 09:17:03.342
-Test Case 'SpeechAndBlinkTests.testABlinkRequestIsReportedExactlyOnce' started at 2026-09-11 09:17:03.342
-Test Case 'SpeechAndBlinkTests.testABlinkRequestIsReportedExactlyOnce' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testARunningSequenceHoldsItsShareOfTheBudgetWhetherOrNotSpeechWithholdsIt' started at 2026-09-11 09:17:03.342
-Test Case 'SpeechAndBlinkTests.testARunningSequenceHoldsItsShareOfTheBudgetWhetherOrNotSpeechWithholdsIt' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testASilentGapInsideASentenceChangesNothingInTheModule' started at 2026-09-11 09:17:03.343
-Test Case 'SpeechAndBlinkTests.testASilentGapInsideASentenceChangesNothingInTheModule' passed (0.001 seconds)
-Test Case 'SpeechAndBlinkTests.testASmileIsStillAllowedToShowWhileASentencePlays' started at 2026-09-11 09:17:03.343
-Test Case 'SpeechAndBlinkTests.testASmileIsStillAllowedToShowWhileASentencePlays' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testAStepCanHoldTheEyesOpenThroughItsOwnBeat' started at 2026-09-11 09:17:03.344
-Test Case 'SpeechAndBlinkTests.testAStepCanHoldTheEyesOpenThroughItsOwnBeat' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testAStricterMaskCanAlsoHoldBackThePressedLipTexture' started at 2026-09-11 09:17:03.344
-Test Case 'SpeechAndBlinkTests.testAStricterMaskCanAlsoHoldBackThePressedLipTexture' passed (0.001 seconds)
-Test Case 'SpeechAndBlinkTests.testEachRepeatOfAStepAsksForItsOwnBlink' started at 2026-09-11 09:17:03.345
-Test Case 'SpeechAndBlinkTests.testEachRepeatOfAStepAsksForItsOwnBlink' passed (0.001 seconds)
-Test Case 'SpeechAndBlinkTests.testTheAutomaticBlinkFadesInProportionToAClosedEyeOverlay' started at 2026-09-11 09:17:03.346
-Test Case 'SpeechAndBlinkTests.testTheAutomaticBlinkFadesInProportionToAClosedEyeOverlay' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testTheBlinkChannelStaysContinuousEvenWithABlinkInFlightThroughout' started at 2026-09-11 09:17:03.346
-Test Case 'SpeechAndBlinkTests.testTheBlinkChannelStaysContinuousEvenWithABlinkInFlightThroughout' passed (0.001 seconds)
-Test Case 'SpeechAndBlinkTests.testTheHostBlinkPassesThroughUntouchedByDefault' started at 2026-09-11 09:17:03.347
-Test Case 'SpeechAndBlinkTests.testTheHostBlinkPassesThroughUntouchedByDefault' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testTheModuleStopsDrivingThePartedWeightWhileSpeechOwnsTheMouth' started at 2026-09-11 09:17:03.347
-Test Case 'SpeechAndBlinkTests.testTheModuleStopsDrivingThePartedWeightWhileSpeechOwnsTheMouth' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testTheOutputHasNoWayToExpressAMouthShapeAtAll' started at 2026-09-11 09:17:03.347
-Test Case 'SpeechAndBlinkTests.testTheOutputHasNoWayToExpressAMouthShapeAtAll' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testTheProportionalFadeCanBeTurnedOff' started at 2026-09-11 09:17:03.348
-Test Case 'SpeechAndBlinkTests.testTheProportionalFadeCanBeTurnedOff' passed (0.0 seconds)
-Test Case 'SpeechAndBlinkTests.testWithNothingRunningTheComposedPoseIsTheHostPoseBitForBit' started at 2026-09-11 09:17:03.348
-Test Case 'SpeechAndBlinkTests.testWithNothingRunningTheComposedPoseIsTheHostPoseBitForBit' passed (0.0 seconds)
-Test Suite 'SpeechAndBlinkTests' passed at 2026-09-11 09:17:03.348
-Executed 14 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
-Test Suite 'TimeTests' started at 2026-09-11 09:17:03.348
-Test Case 'TimeTests.testAnInvalidMaximumStepFallsBackToTheDefaultCap' started at 2026-09-11 09:17:03.348
-Test Case 'TimeTests.testAnInvalidMaximumStepFallsBackToTheDefaultCap' passed (0.0 seconds)
-Test Case 'TimeTests.testAnOversizedStepIsCappedAndReported' started at 2026-09-11 09:17:03.349
-Test Case 'TimeTests.testAnOversizedStepIsCappedAndReported' passed (0.0 seconds)
-Test Case 'TimeTests.testBackwardsTimeNeverProducesANegativeStep' started at 2026-09-11 09:17:03.349
-Test Case 'TimeTests.testBackwardsTimeNeverProducesANegativeStep' passed (0.0 seconds)
-Test Case 'TimeTests.testFirstFrameEstablishesTheOriginInsteadOfJumping' started at 2026-09-11 09:17:03.349
-Test Case 'TimeTests.testFirstFrameEstablishesTheOriginInsteadOfJumping' passed (0.0 seconds)
-Test Case 'TimeTests.testInfiniteTimeIsTreatedTheSameWay' started at 2026-09-11 09:17:03.349
-Test Case 'TimeTests.testInfiniteTimeIsTreatedTheSameWay' passed (0.0 seconds)
-Test Case 'TimeTests.testNonFiniteTimeIsRefusedWithoutDisturbingTheClock' started at 2026-09-11 09:17:03.350
-Test Case 'TimeTests.testNonFiniteTimeIsRefusedWithoutDisturbingTheClock' passed (0.0 seconds)
-Test Case 'TimeTests.testOrdinaryFramesAccumulateExactly' started at 2026-09-11 09:17:03.350
-Test Case 'TimeTests.testOrdinaryFramesAccumulateExactly' passed (0.0 seconds)
-Test Case 'TimeTests.testResynchroniseKeepsTheClockButForgetsTheReference' started at 2026-09-11 09:17:03.350
-Test Case 'TimeTests.testResynchroniseKeepsTheClockButForgetsTheReference' passed (0.0 seconds)
-Test Suite 'TimeTests' passed at 2026-09-11 09:17:03.350
+Test Suite 'SequenceValidationTests' passed at 2026-09-11 09:59:41.693
 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
-Test Suite 'debug.xctest' passed at 2026-09-11 09:17:03.350
-Executed 114 tests, with 0 failures (0 unexpected) in 0.432 (0.432) seconds
-Test Suite 'All tests' passed at 2026-09-11 09:17:03.350
-Executed 114 tests, with 0 failures (0 unexpected) in 0.432 (0.432) seconds
+Test Suite 'SpeechAndBlinkTests' started at 2026-09-11 09:59:41.693
+Test Case 'SpeechAndBlinkTests.testABlinkRequestIsReportedExactlyOnce' started at 2026-09-11 09:59:41.693
+Test Case 'SpeechAndBlinkTests.testABlinkRequestIsReportedExactlyOnce' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testARunningSequenceHoldsItsShareOfTheBudgetWhetherOrNotSpeechWithholdsIt' started at 2026-09-11 09:59:41.693
+Test Case 'SpeechAndBlinkTests.testARunningSequenceHoldsItsShareOfTheBudgetWhetherOrNotSpeechWithholdsIt' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testASilentGapInsideASentenceChangesNothingInTheModule' started at 2026-09-11 09:59:41.693
+Test Case 'SpeechAndBlinkTests.testASilentGapInsideASentenceChangesNothingInTheModule' passed (0.001 seconds)
+Test Case 'SpeechAndBlinkTests.testASmileIsStillAllowedToShowWhileASentencePlays' started at 2026-09-11 09:59:41.694
+Test Case 'SpeechAndBlinkTests.testASmileIsStillAllowedToShowWhileASentencePlays' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testAStepCanHoldTheEyesOpenThroughItsOwnBeat' started at 2026-09-11 09:59:41.694
+Test Case 'SpeechAndBlinkTests.testAStepCanHoldTheEyesOpenThroughItsOwnBeat' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testAStricterMaskCanAlsoHoldBackThePressedLipTexture' started at 2026-09-11 09:59:41.694
+Test Case 'SpeechAndBlinkTests.testAStricterMaskCanAlsoHoldBackThePressedLipTexture' passed (0.001 seconds)
+Test Case 'SpeechAndBlinkTests.testEachRepeatOfAStepAsksForItsOwnBlink' started at 2026-09-11 09:59:41.695
+Test Case 'SpeechAndBlinkTests.testEachRepeatOfAStepAsksForItsOwnBlink' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testTheAutomaticBlinkFadesInProportionToAClosedEyeOverlay' started at 2026-09-11 09:59:41.695
+Test Case 'SpeechAndBlinkTests.testTheAutomaticBlinkFadesInProportionToAClosedEyeOverlay' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testTheBlinkChannelStaysContinuousEvenWithABlinkInFlightThroughout' started at 2026-09-11 09:59:41.696
+Test Case 'SpeechAndBlinkTests.testTheBlinkChannelStaysContinuousEvenWithABlinkInFlightThroughout' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testTheHostBlinkPassesThroughUntouchedByDefault' started at 2026-09-11 09:59:41.696
+Test Case 'SpeechAndBlinkTests.testTheHostBlinkPassesThroughUntouchedByDefault' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testTheModuleStopsDrivingThePartedWeightWhileSpeechOwnsTheMouth' started at 2026-09-11 09:59:41.696
+Test Case 'SpeechAndBlinkTests.testTheModuleStopsDrivingThePartedWeightWhileSpeechOwnsTheMouth' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testTheOutputHasNoWayToExpressAMouthShapeAtAll' started at 2026-09-11 09:59:41.697
+Test Case 'SpeechAndBlinkTests.testTheOutputHasNoWayToExpressAMouthShapeAtAll' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testTheProportionalFadeCanBeTurnedOff' started at 2026-09-11 09:59:41.697
+Test Case 'SpeechAndBlinkTests.testTheProportionalFadeCanBeTurnedOff' passed (0.0 seconds)
+Test Case 'SpeechAndBlinkTests.testWithNothingRunningTheComposedPoseIsTheHostPoseBitForBit' started at 2026-09-11 09:59:41.697
+Test Case 'SpeechAndBlinkTests.testWithNothingRunningTheComposedPoseIsTheHostPoseBitForBit' passed (0.0 seconds)
+Test Suite 'SpeechAndBlinkTests' passed at 2026-09-11 09:59:41.698
+Executed 14 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'TimeTests' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testAnInvalidMaximumStepFallsBackToTheDefaultCap' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testAnInvalidMaximumStepFallsBackToTheDefaultCap' passed (0.0 seconds)
+Test Case 'TimeTests.testAnOversizedStepIsCappedAndReported' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testAnOversizedStepIsCappedAndReported' passed (0.0 seconds)
+Test Case 'TimeTests.testBackwardsTimeNeverProducesANegativeStep' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testBackwardsTimeNeverProducesANegativeStep' passed (0.0 seconds)
+Test Case 'TimeTests.testFirstFrameEstablishesTheOriginInsteadOfJumping' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testFirstFrameEstablishesTheOriginInsteadOfJumping' passed (0.0 seconds)
+Test Case 'TimeTests.testInfiniteTimeIsTreatedTheSameWay' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testInfiniteTimeIsTreatedTheSameWay' passed (0.0 seconds)
+Test Case 'TimeTests.testNonFiniteTimeIsRefusedWithoutDisturbingTheClock' started at 2026-09-11 09:59:41.698
+Test Case 'TimeTests.testNonFiniteTimeIsRefusedWithoutDisturbingTheClock' passed (0.0 seconds)
+Test Case 'TimeTests.testOrdinaryFramesAccumulateExactly' started at 2026-09-11 09:59:41.699
+Test Case 'TimeTests.testOrdinaryFramesAccumulateExactly' passed (0.0 seconds)
+Test Case 'TimeTests.testResynchroniseKeepsTheClockButForgetsTheReference' started at 2026-09-11 09:59:41.699
+Test Case 'TimeTests.testResynchroniseKeepsTheClockButForgetsTheReference' passed (0.0 seconds)
+Test Suite 'TimeTests' passed at 2026-09-11 09:59:41.699
+Executed 8 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'debug.xctest' passed at 2026-09-11 09:59:41.699
+Executed 115 tests, with 0 failures (0 unexpected) in 0.416 (0.416) seconds
+Test Suite 'All tests' passed at 2026-09-11 09:59:41.699
+Executed 115 tests, with 0 failures (0 unexpected) in 0.416 (0.416) seconds
 
-$ ./examples/run-all.sh   (regenerating examples/output)
+$ ./examples/run-all.sh
   greeting     -> examples/output/greeting.csv
   interrupt    -> examples/output/interrupt.csv
   reverse      -> examples/output/reverse.csv
@@ -351,23 +352,19 @@ $ for s in 4242 4242 4243; do choreo-demo --scenario ambient --seed $s --duratio
 890aa67a2183d2e2ea554ef6fdf2e614a74c122cd447bd40d8a9e7a88573190b  -
 890aa67a2183d2e2ea554ef6fdf2e614a74c122cd447bd40d8a9e7a88573190b  -
 aa9b355a95b4f38d1e0a79c7cb78f809304dd6b6ea33c5bdd47addb5a488c6a2  -
-# 7201 rows each: identical for a repeated seed, different for a different seed.
 
-$ choreo-demo --scenario aperture   (the B1 regression, as frames)
-# pressed holds at 0.5780 across both speech boundaries; before the fix it
-# stepped to 0.8500 at speech start and back at speech end.
-frame,host_time,pose_pressed,pose_parted,mouth_opening,speech_active
-44,1.8333,0.5780,0.3200,0.3200,0
-45,1.8750,0.5780,0.3200,0.3200,0
-46,1.9167,0.5780,0.3200,0.3200,0
-47,1.9583,0.5780,0.3200,0.3200,0
-48,2.0000,0.5780,0.0000,0.0000,1
-49,2.0417,0.5780,0.0000,0.0000,1
-50,2.0833,0.5780,0.0000,0.0000,1
-92,3.8333,0.5780,0.0000,0.0000,1
-93,3.8750,0.5780,0.0000,0.0000,1
-94,3.9167,0.5780,0.0000,0.0000,1
-95,3.9583,0.5780,0.0000,0.0886,1
-96,4.0000,0.5780,0.0000,0.0000,0
-97,4.0417,0.5780,0.0435,0.0435,0
-98,4.0833,0.5780,0.1423,0.1423,0
+=== 本地接入补丁复核:核心版本判别(两版核心实测) ===
+$ 底层 pressedLips(0.85) + 微张唇叠加层,说话开始那一帧的 pressed 单帧跳变
+  core 1.0.0  pressed 0.5780 -> 0.8500   step 0.2720
+  core 1.1.0  pressed 0.5780 -> 0.5780   step 0.0000
+$ CoreVersionAssertion.swift 编译期断言
+  core 1.0.0  BUILD FAILS (extra argument 'speechMask')
+  core 1.1.0  compiles, runtime step = 0.0000
+$ 1.1.0 的 ChoreographyBridge.swift 对着 core 1.0.0:  COMPILES CLEANLY
+$ git diff e0e5059 db26e2c -- integrations/ChoreographyHostKit/ChoreographyBridge.swift:  (empty)
+
+=== reduce-motion 依赖的模块行为(1.1.0 核心实测) ===
+  待机开 90s:      ambient 起 4 次
+  待机关 300s:     ambient 起 0 次
+  待机关时显式序列: 叠加层峰值 0.3200
+  重新打开后首次:   9.88 s(firstDelay 7~15 s,补播会是 ~0 s)

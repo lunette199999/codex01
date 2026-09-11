@@ -146,6 +146,28 @@ final class LifecycleTests: XCTestCase {
                        "and it does not pounce the instant the sentence ends")
     }
 
+    func testReEnablingIdleAfterALongPauseDoesNotFireABacklog() {
+        // The property the host's reduce-motion gating depends on: turning idle
+        // off for a long time and back on must restart the countdown from the
+        // moment it comes back, not replay what it missed.
+        let configuration = ChoreographyConfiguration(seed: 4, ambient: AmbientConfiguration())
+        let driver = Driver(configuration: configuration)
+        driver.run(seconds: 90)
+        XCTAssertGreaterThan(driver.notices().filter { $0.kind.isStarted }.count, 0)
+
+        driver.director.setIdleEnabled(false)
+        let whileOff = driver.run(seconds: 300)
+        XCTAssertFalse(whileOff.contains { output in output.notices.contains { $0.kind.isStarted } })
+
+        driver.director.setIdleEnabled(true)
+        let firstWindow = driver.run(seconds: 6)
+        XCTAssertFalse(firstWindow.contains { output in output.notices.contains { $0.kind.isStarted } },
+                       "a banked countdown would fire the instant it is re-enabled")
+        let later = driver.run(seconds: 20)
+        XCTAssertTrue(later.contains { output in output.notices.contains { $0.kind.isStarted } },
+                      "but it does come back on its own")
+    }
+
     func testResetLeavesACleanDirector() {
         let driver = Driver()
         driver.director.play(hold(.smile, id: "running", duration: 5))

@@ -30,7 +30,7 @@ $ swift build --build-tests
 Build complete!                     0 warnings, 0 errors
 
 $ swift test
-Executed 114 tests, with 0 failures (0 unexpected)
+Executed 115 tests, with 0 failures (0 unexpected)
 ```
 
 | Suite | Tests | What it covers |
@@ -40,7 +40,7 @@ Executed 114 tests, with 0 failures (0 unexpected)
 | `SequenceValidationTests` | 8 | Structural refusals, non-finite timing, clamping, overlong sequences, zero-length endless sequences, repeat and jitter repair |
 | `ArbitrationTests` | 15 | Three-beat run, interruption, reversal, lower priority, equal priority, `rejectIfBusy`, queueing and queue order, queue bound, cancel, cancel-all, no standing overlay, timer term, repeats, endless |
 | `SpeechAndBlinkTests` | 13 | No mouth column is written, smile survives speech, parted withheld, pose untouched with nothing running, the reservation holds across a sentence boundary, strict mask, silent gap, blink pass-through, hold, proportional fade under a rest overlay, continuity with a blink in flight, fade switchable, trigger edge, per-repeat triggers |
-| `LifecycleTests` | 11 | Hide, hidden pass-through, refusal while hidden, resume, idle re-arm, large step, idle off, idle off mid-sequence, ambient refusal, speech pause, reset |
+| `LifecycleTests` | 12 | Hide, hidden pass-through, refusal while hidden, resume, idle re-arm, large step, idle off, idle off mid-sequence, ambient refusal, speech pause, reset |
 | `RobustnessTests` | 9 | NaN clock, poisoned base pose, rewound clock, 6 000-frame hostile fuzz, 3 000-frame realistic fuzz, zero-length steps, zero blend, duplicate timestamps, no internal clock |
 | `BridgeTests` | 6 | Vocabulary taken from the app's own table, bundled copy matches, both-way enum bridging, exact pose conversion, poisoned pose, timer-change edge |
 | `CompositionAcceptanceTests` | 15 | Composition, mouth ownership and the speech-mask interactions. Set out in full in `docs/ACCEPTANCE.md`, including the three defects they found and the one interaction they bound |
@@ -101,8 +101,20 @@ mouth), found three real discontinuities and fixed them, and bounded a fourth
 interaction that is inherent rather than a defect. The fifteen cases in
 `CompositionAcceptanceTests` are the result and are included in the 114 above.
 
-The local integration patch had not been received when this was written, so it
-has not been reviewed against those cases.
+## Third pass: local integration patch review
+
+`docs/PATCH-REVIEW.md` reviews the 0.3.5 integration patch against the nine
+points. The wiring is correct on all nine. Two things came out of it:
+
+* The 12 on-device acceptance cases cannot distinguish core 1.0.0 from 1.1.0 —
+  the bridge is byte-identical between the two versions, the 1.1.0 bridge
+  compiles cleanly against the 1.0.0 core, and none of the four sequences the
+  cases play carries a masked component. Measured on both cores here: the same
+  input steps `pressed` by 0.272 on 1.0.0 and 0.000 on 1.1.0.
+  `integrations/local-patch-review/` carries a compile-time and a runtime proof.
+* Reduce-motion is not wired to `setIdleEnabled`. The minimal fix is in
+  `integrations/local-patch-review/reduce-motion.patch`; the module behaviour it
+  relies on is verified here, the AppKit code itself is not.
 
 ## Reproducing
 

@@ -15,11 +15,14 @@ The core depends on Foundation alone.
   `ExpressionPose`, plus a compile-check shim and a head-less reproduction of
   `DesktopController.renderFrame()`.
 * `examples/ChoreographyDemo/` — `choreo-demo`, a per-frame CSV/JSONL dump.
-* `Tests/` — 114 XCTest cases; see [docs/TEST-LOG.md](docs/TEST-LOG.md) for what
+* `Tests/` — 115 XCTest cases; see [docs/TEST-LOG.md](docs/TEST-LOG.md) for what
   was actually compiled and run.
 * [docs/INTEGRATION.md](docs/INTEGRATION.md) — the four insertion points.
 * [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) — the composition and mouth-ownership
   acceptance cases, and what is still unverified.
+* [docs/PATCH-REVIEW.md](docs/PATCH-REVIEW.md) — review of the 0.3.5 local
+  integration patch against those cases, with the attachments it refers to in
+  `integrations/local-patch-review/`.
 
 ---
 
@@ -262,7 +265,7 @@ expression in `updateTimer()`, and the lifecycle calls in
 
 ## Testing
 
-114 XCTest cases, compiled and run. Exactly what ran, on what, and what could
+115 XCTest cases, compiled and run. Exactly what ran, on what, and what could
 not be checked here is recorded in [docs/TEST-LOG.md](docs/TEST-LOG.md) with the
 raw log in `docs/logs/build-and-test.txt`. The composition and mouth-ownership
 cases are set out separately in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), which

@@ -1,0 +1,50 @@
+--- a/scripts/apply.py
++++ b/scripts/apply.py
+@@ -1,11 +1,14 @@
+ #!/usr/bin/env python3
+ """把动作编排接入一份 0.3.5 的**独立副本**。不碰原工程,不碰已安装应用。
+ 
+-    python3 scripts/apply.py <0.3.5 的 project 目录> <ExpressionChoreography-1.0.0 目录> [目标目录]
++    python3 scripts/apply.py <0.3.5 的 project 目录> <ExpressionChoreography-1.1.0 目录> [目标目录]
++
++核心必须是 1.1.0 或更新:遮罩占位预算、统一 speechMask、连续眨眼衰减三处修复
++全在核心里,桥接文件在两版之间逐字节相同,所以"桥接对得上"证明不了核心版本。
+ 
+ 默认目标是 <当前目录>/choreo-copy。
+ """
+-import shutil, subprocess, sys
++import hashlib, shutil, subprocess, sys
+ from pathlib import Path
+ 
+ HERE = Path(__file__).resolve().parent
+@@ -21,6 +24,14 @@
+         print(f'不像是 0.3.5 的 project 目录: {source}'); return 1
+     if not (module / 'Sources/ExpressionChoreography').exists():
+         print(f'不像是 ExpressionChoreography 解包目录: {module}'); return 1
++    # 核心版本闸门。这两个参数标签是 1.1.0 才有的;缺了就说明拿到的是 1.0.0,
++    # 三处修复都不在里面,而构建和 12 项验收都不会因此失败。
++    config = (module / 'Sources/ExpressionChoreography/ChoreographyConfiguration.swift').read_text()
++    missing = [k for k in ('speechMask', 'blinkFadesUnderRestOverlay') if k not in config]
++    if missing:
++        print(f'核心不是 1.1.0 或更新(ChoreographyConfiguration 缺少 {", ".join(missing)})。')
++        print('1.0.0 的核心在说话开始/结束时会让底层表情跳变 0.272,请换 1.1.0 的解包目录。')
++        return 1
+     if target.exists():
+         print(f'目标已存在,先删掉或换个路径: {target}'); return 1
+ 
+@@ -28,8 +39,14 @@
+     # 核心模块作为**独立 target** 放进 app 包,不并进 app target。
+     dst = target / 'Sources/ExpressionChoreography'
+     dst.mkdir(parents=True, exist_ok=True)
+-    for f in sorted((module / 'Sources/ExpressionChoreography').glob('*.swift')):
++    copied = sorted((module / 'Sources/ExpressionChoreography').glob('*.swift'))
++    for f in copied:
+         shutil.copy2(f, dst)
++    # 把实际复制进去的核心记下来,免得事后只能靠回忆判断链接的是哪一版。
++    digest = hashlib.sha256()
++    for f in copied:
++        digest.update(f.read_bytes())
++    print(f'核心 {len(copied)} 个文件,合并 sha256 {digest.hexdigest()[:16]}')
+     # 只这一个文件进 app target。shim 与 harness **不复制**(文档明确要求)。
+     shutil.copy2(KIT / 'module/ChoreographyBridge.swift', target / 'Sources/ZhengZhipuDesktop/')
+     for name in ('ChoreographyIntegration.swift', 'ChoreographyPreview.swift'):

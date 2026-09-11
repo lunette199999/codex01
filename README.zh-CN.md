@@ -12,9 +12,11 @@
   的接入适配器，另含一个编译校验用的宿主类型副本，以及 `DesktopController.renderFrame()`
   的无界面复现。
 * `examples/ChoreographyDemo/` —— 命令行 `choreo-demo`，逐帧输出 CSV / JSONL。
-* `Tests/` —— 114 项 XCTest；实际编译与运行情况见 [docs/TEST-LOG.md](docs/TEST-LOG.md)。
+* `Tests/` —— 115 项 XCTest；实际编译与运行情况见 [docs/TEST-LOG.md](docs/TEST-LOG.md)。
 * [docs/INTEGRATION.md](docs/INTEGRATION.md) —— 四个插入点。
 * [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) —— 合成与嘴形归属的验收用例，以及尚未验证的部分。
+* [docs/PATCH-REVIEW.md](docs/PATCH-REVIEW.md) —— 对 0.3.5 本地接入补丁的逐项复核，
+  附件在 `integrations/local-patch-review/`。
 
 ---
 
@@ -228,7 +230,7 @@ swift run choreo-demo --scenario ambient --seed 42 --duration 240
 
 ## 测试
 
-114 项 XCTest，已实际编译并运行。到底在什么环境跑了什么、以及这里查不到的部分，都记在
+115 项 XCTest，已实际编译并运行。到底在什么环境跑了什么、以及这里查不到的部分，都记在
 [docs/TEST-LOG.md](docs/TEST-LOG.md)，原始日志见 `docs/logs/build-and-test.txt`。合成与
 嘴形归属相关的验收用例单列在 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)，其中也写明了哪些
 还需要在 macOS 上验证、哪些还需要用眼睛看。
