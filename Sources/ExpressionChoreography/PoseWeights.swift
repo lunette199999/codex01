@@ -96,7 +96,11 @@ public struct PoseWeights: Equatable, Hashable, Sendable {
     ///
     /// The renderer treats these four numbers as blend weights over existing
     /// photo layers, and the shipped self-test already asserts that a mid
-    /// cross-fade keeps `smile + pressed <= 1`. Scaling the base down by exactly
+    /// cross-fade keeps `smile + pressed <= 1`. Note that the renderer itself
+    /// only needs that one pair to be sensible — `mouthPose` normalises it, and
+    /// `rest` and `parted` are read on separate paths. Sharing a single budget
+    /// across all four is this module's choice, and `docs/EYELID-CONTRACT.md` §8
+    /// records what it costs. Scaling the base down by exactly
     /// the overlay's own weight preserves that, and a full-strength overlay is an
     /// ordinary cross-fade rather than an addition on top.
     ///

@@ -113,42 +113,32 @@ final class SpeechAndBlinkTests: XCTestCase {
         XCTAssertFalse(driver.frames.last!.blinkOverridden)
     }
 
-    func testTheAutomaticBlinkFadesInProportionToAClosedEyeOverlay() {
+    func testTheBlinkRequestIsNotScaledByAnyRestOverlay() {
+        // `blink` and `pose.rest` are two requests for the same quantity, and the
+        // renderer resolves them once with `max`. Scaling one by the other here
+        // would be a second composition point — it is what hid the blink for
+        // every `rest >= 0.5`. The final eyelid value is asserted in
+        // ChoreographyHostKitTests/EyelidCompositionTests, against the
+        // renderer's own function.
         let driver = Driver()
         driver.baseBlink = 0.4
         driver.director.play(hold(.resting, id: "rest", blend: 0.3, duration: 1.0))
         driver.run(seconds: 1.0)
-        // Exactly proportional on every frame: no threshold anywhere to step over.
-        for output in driver.frames {
-            XCTAssertEqual(output.blink, 0.4 * (1 - output.overlay.rest), accuracy: 1e-12)
-        }
-        XCTAssertEqual(driver.frames.last?.blink, 0)
-        XCTAssertTrue(driver.frames.last!.blinkOverridden)
+        XCTAssertTrue(driver.frames.allSatisfy { $0.blink == 0.4 && !$0.blinkOverridden },
+                      "the host's own blink value must reach the frame untouched")
+        XCTAssertEqual(driver.frames.last!.overlay.rest, 1, accuracy: 1e-9,
+                       "even with the overlay holding the lid fully closed")
     }
 
-    func testTheBlinkChannelStaysContinuousEvenWithABlinkInFlightThroughout() {
-        // The worst case for a threshold rule: a fully closed blink held across
-        // the whole beat, so any switch shows up as a full-scale step.
+    func testTheBlinkChannelIsFlatWhenTheHostBlinkIsFlat() {
+        // With nothing scaling it, a steady request produces a steady channel
+        // whatever the pose does around it.
         let driver = Driver()
         driver.baseBlink = 1
         driver.director.play(hold(.resting, id: "rest", blend: 1.0, duration: 0.5))
         driver.run(seconds: 3)
-        var worst = 0.0
-        for (previous, current) in zip(driver.frames, driver.frames.dropFirst()) {
-            worst = max(worst, abs(current.blink - previous.blink))
-        }
-        XCTAssertLessThan(worst, smoothStepFrameLimit(amplitude: 1, blend: 0.38),
-                          "the blink channel must not step when the pose comes or goes")
-    }
-
-    func testTheProportionalFadeCanBeTurnedOff() {
-        let configuration = ChoreographyConfiguration(blinkFadesUnderRestOverlay: false, ambient: .disabled)
-        let driver = Driver(configuration: configuration)
-        driver.baseBlink = 0.4
-        driver.director.play(hold(.resting, id: "rest", blend: 0.2, duration: 1.0))
-        driver.run(seconds: 1.0)
-        XCTAssertEqual(driver.frames.last?.blink, 0.4)
-        XCTAssertFalse(driver.frames.last!.blinkOverridden)
+        let steps = zip(driver.frames, driver.frames.dropFirst()).map { abs($1.blink - $0.blink) }
+        XCTAssertEqual(steps.max() ?? 1, 0, accuracy: 1e-12)
     }
 
     func testABlinkRequestIsReportedExactlyOnce() {

@@ -42,6 +42,7 @@ public final class HostRenderLoopHarness {
     private var blinkClock = BlinkClock()
     private var restMouthReturn = RestMouthReturn()
     private var blinkIntervals: SeededGenerator
+    private var manualBlinksOnly = false
 
     public private(set) var expression: Expression = .natural
     public private(set) var isIdleEnabled: Bool
@@ -103,6 +104,20 @@ public final class HostRenderLoopHarness {
 
     public var directorClock: Double { bridge.director.clock }
 
+    /// Hands `BlinkClock` an interval far beyond any test, so the only blinks
+    /// that happen are the ones a test asks for. The clock itself is untouched —
+    /// this only chooses the interval it is given and the moment it is armed.
+    public func useManualBlinks() {
+        manualBlinksOnly = true
+        blinkClock.reset(at: 1e6)
+    }
+
+    /// `BlinkClock.trigger(at:)`, which is the same call a step's
+    /// `.triggerOnEnter` produces. The blink lands on the following frame.
+    public func triggerBlinkForTesting(at time: Double) {
+        blinkClock.trigger(at: time)
+    }
+
     // MARK: - The frame
 
     /// The same order of operations as `DesktopController.renderFrame()`, with
@@ -111,7 +126,8 @@ public final class HostRenderLoopHarness {
     public func renderFrame(at time: Double, speech: HostSpeechSample = .silent) -> MotionFrame {
         // 1. Existing: the app's own blink and expression transition.
         var generator = blinkIntervals
-        let baseBlink = isIdleEnabled ? blinkClock.value(at: time, nextInterval: { generator.next(in: 3.2...7.0) }) : 0
+        let interval: () -> Double = manualBlinksOnly ? { 1e6 } : { generator.next(in: 3.2...7.0) }
+        let baseBlink = isIdleEnabled ? blinkClock.value(at: time, nextInterval: interval) : 0
         blinkIntervals = generator
         var pose = transition.sample(at: time)
         let speechActive = speech.isActive

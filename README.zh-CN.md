@@ -12,11 +12,13 @@
   的接入适配器，另含一个编译校验用的宿主类型副本，以及 `DesktopController.renderFrame()`
   的无界面复现。
 * `examples/ChoreographyDemo/` —— 命令行 `choreo-demo`，逐帧输出 CSV / JSONL。
-* `Tests/` —— 115 项 XCTest；实际编译与运行情况见 [docs/TEST-LOG.md](docs/TEST-LOG.md)。
+* `Tests/` —— 127 项 XCTest；实际编译与运行情况见 [docs/TEST-LOG.md](docs/TEST-LOG.md)。
 * [docs/INTEGRATION.md](docs/INTEGRATION.md) —— 四个插入点。
 * [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) —— 合成与嘴形归属的验收用例，以及尚未验证的部分。
 * [docs/PATCH-REVIEW.md](docs/PATCH-REVIEW.md) —— 对 0.3.5 本地接入补丁的逐项复核，
   附件在 `integrations/local-patch-review/`。
+* [docs/EYELID-CONTRACT.md](docs/EYELID-CONTRACT.md) —— `rest` 与 `blink` 各自是什么、
+  眼皮闭合在哪里合成，以及 1.2.0 的修正。
 
 ---
 
@@ -162,6 +164,14 @@ let thinking = ChoreographySequence(
 result = base * (1 - min(1, overlay.total)) + overlay
 ```
 
+**渲染器实际要求的是什么。** 读过 0.3.5 的 `PortraitRenderer` 之后：`rest` 只进
+`blinkAmount`，`parted` 只进 `mouthOpening`，而 `smile` 与 `pressed` 成对进
+`mouthPose`，并且**渲染器自己会归一化那一对**（`let total = max(1, smile + pressed)`）。
+渲染器**没有**四权重求和的约束。把 `result.total` 压在 1 以内是本模块的分配选择——
+它让这四个数可以当作一份预算来读——而不是渲染器的要求。本文早先的说法相反，那是错的。
+一个值得知道的后果记在 [docs/EYELID-CONTRACT.md](docs/EYELID-CONTRACT.md) 第八节：
+由于 `rest` 与嘴部权重共用预算，手选「闭眼休息」时叠一条微笑序列会把眼皮掀开最多 80%。
+
 因此只要 `base.total <= 1` 就保证 `result.total <= 1`，而满强度覆盖就是一次普通的
 交叉淡入。宿主能产生的每一种姿态都满足这个前提；即便传进来的 base 本身已经超预算，
 模块也保证不会让它更糟。
@@ -230,7 +240,7 @@ swift run choreo-demo --scenario ambient --seed 42 --duration 240
 
 ## 测试
 
-115 项 XCTest，已实际编译并运行。到底在什么环境跑了什么、以及这里查不到的部分，都记在
+127 项 XCTest，已实际编译并运行。到底在什么环境跑了什么、以及这里查不到的部分，都记在
 [docs/TEST-LOG.md](docs/TEST-LOG.md)，原始日志见 `docs/logs/build-and-test.txt`。合成与
 嘴形归属相关的验收用例单列在 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)，其中也写明了哪些
 还需要在 macOS 上验证、哪些还需要用眼睛看。

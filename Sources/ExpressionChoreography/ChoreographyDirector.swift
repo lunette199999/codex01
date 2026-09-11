@@ -228,17 +228,20 @@ public final class ChoreographyDirector {
         // smile in the same frame.
         let composed = PoseWeights.layer(base: input.basePose, overlay: maskedOverlay, claiming: overlay.total)
 
+        // `blink` and `pose.rest` are two requests for the SAME quantity — how far
+        // the eyelid is down — and the renderer resolves them in one place, with
+        // `max(pose.rest, frame.blink)`. So the module must not scale one by the
+        // other on the way out: that would be a second composition point, and it
+        // is what made a blink invisible for every `rest >= 0.5`. The blink is
+        // passed through as the blink's own request; only an explicit step
+        // directive replaces it.
         var blink = ChoreographyLimits.clamp(input.baseBlink, 0, 1, fallback: 0)
         var overridden = false
         if let current = active, case .hold(let value) = current.sequence.steps[current.stepIndex].blink {
-            // An explicit hold is the author's decision and takes effect at once.
+            // A hold replaces the blink's request rather than scaling it, so it
+            // adds no second attenuation: `.hold(0)` asks for no blink, and the
+            // renderer still shows `max(rest, 0) == rest`.
             blink = ChoreographyLimits.clamp(value, 0, 1, fallback: 0)
-            overridden = true
-        } else if configuration.blinkFadesUnderRestOverlay && maskedOverlay.rest > 0 {
-            // Proportional rather than a threshold: a blink under an eyelid the
-            // overlay has already closed is invisible, and fading keeps the
-            // blink channel continuous as the pose comes and goes.
-            blink *= 1 - maskedOverlay.rest
             overridden = true
         }
 

@@ -145,6 +145,30 @@ public struct BlinkClock {
     }
 }
 
+/// Verbatim excerpt of `PortraitRenderer.blinkAmount(for:)` from 0.3.5.
+///
+/// The renderer is the single place eyelid closure is composed. It is copied
+/// here — behind the same shim flag as the rest of this file — only so the tests
+/// can assert on the value the screen would actually show, instead of on the
+/// module's request alone. The module never calls this, and the app keeps its
+/// own copy as the one that runs.
+public enum HostEyelid {
+    public static func amount(for frame: MotionFrame) -> Double {
+        func unit(_ x: Double) -> Double { x.isFinite ? min(1, max(0, x)) : 0 }
+        let pose = frame.expressionPose ?? ExpressionPose.target(frame.expression)
+        return max(unit(pose.rest), unit(frame.blink))
+    }
+
+    /// What 1.1.0 produced, kept so a test can show the same case failing under
+    /// the composition it replaced. `rest` here is the module's overlay rest,
+    /// which is what 1.1.0 scaled by.
+    public static func amountUnder1_1_0(for frame: MotionFrame, overlayRest: Double) -> Double {
+        func unit(_ x: Double) -> Double { x.isFinite ? min(1, max(0, x)) : 0 }
+        let pose = frame.expressionPose ?? ExpressionPose.target(frame.expression)
+        return max(unit(pose.rest), unit(frame.blink) * (1 - unit(overlayRest)))
+    }
+}
+
 public enum SpeechDemo {
     public static let duration = 6.8
     private static let frames: [(Double, Double, Double)] = [

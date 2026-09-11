@@ -153,7 +153,10 @@ Nothing here has seen an Apple SDK. These need a build on macOS 13+:
   manually selected 轻抿唇 stay. A sequence can now *start* one mid-sentence,
   which the app could not do before. Pressed lips over an open mouth may look
   wrong; `.speechOwnedStrict` is the switch if it does.
-* **The reservation's dimming.** While a masked sequence runs, the base is scaled
+* **The reservation's dimming.** (Correction since this was written: the
+  four-way sum is *not* a renderer requirement — see
+  [EYELID-CONTRACT.md](EYELID-CONTRACT.md) §8. The dimming is this module's
+  allocation choice and could be changed.) While a masked sequence runs, the base is scaled
   by the overlay's reservation even though the overlay is contributing nothing
   visible — a `pressedLips` base sits at 0.578 rather than 0.85 for the duration.
   This is the price of not stepping, and it is constant rather than moving, but

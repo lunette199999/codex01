@@ -30,7 +30,7 @@ $ swift build --build-tests
 Build complete!                     0 warnings, 0 errors
 
 $ swift test
-Executed 115 tests, with 0 failures (0 unexpected)
+Executed 127 tests, with 0 failures (0 unexpected)
 ```
 
 | Suite | Tests | What it covers |
@@ -39,10 +39,11 @@ Executed 115 tests, with 0 failures (0 unexpected)
 | `TimeTests` | 8 | First frame, accumulation, NaN, infinity, rewound clock, oversized step, re-synchronisation, invalid cap |
 | `SequenceValidationTests` | 8 | Structural refusals, non-finite timing, clamping, overlong sequences, zero-length endless sequences, repeat and jitter repair |
 | `ArbitrationTests` | 15 | Three-beat run, interruption, reversal, lower priority, equal priority, `rejectIfBusy`, queueing and queue order, queue bound, cancel, cancel-all, no standing overlay, timer term, repeats, endless |
-| `SpeechAndBlinkTests` | 13 | No mouth column is written, smile survives speech, parted withheld, pose untouched with nothing running, the reservation holds across a sentence boundary, strict mask, silent gap, blink pass-through, hold, proportional fade under a rest overlay, continuity with a blink in flight, fade switchable, trigger edge, per-repeat triggers |
+| `SpeechAndBlinkTests` | 12 | No mouth column is written, smile survives speech, parted withheld, pose untouched with nothing running, the reservation holds across a sentence boundary, strict mask, silent gap, blink pass-through, hold, proportional fade under a rest overlay, continuity with a blink in flight, fade switchable, trigger edge, per-repeat triggers |
 | `LifecycleTests` | 12 | Hide, hidden pass-through, refusal while hidden, resume, idle re-arm, large step, idle off, idle off mid-sequence, ambient refusal, speech pause, reset |
 | `RobustnessTests` | 9 | NaN clock, poisoned base pose, rewound clock, 6 000-frame hostile fuzz, 3 000-frame realistic fuzz, zero-length steps, zero blend, duplicate timestamps, no internal clock |
 | `BridgeTests` | 6 | Vocabulary taken from the app's own table, bundled copy matches, both-way enum bridging, exact pose conversion, poisoned pose, timer-change edge |
+| `EyelidCompositionTests` | 13 | The eyelid contract: the rest ladder 0 / 0.30 / 0.55 / 0.70 / 1, the same frames scored under the composition 1.2.0 replaced, the exact crossover at a half, rest changing mid-blink, cancel and preempt mid-blink, base rest and overlay rest together, and the measured travel and visible-frame table |
 | `CompositionAcceptanceTests` | 15 | Composition, mouth ownership and the speech-mask interactions. Set out in full in `docs/ACCEPTANCE.md`, including the three defects they found and the one interaction they bound |
 | `RenderLoopTests` | 12 | Mouth columns untouched, aperture identical with and without a sequence, closures and pauses stay closed, smile survives while parted does not, `RestMouthReturn` sole ownership, manual expression with idle off, layering over a manual expression, timer returns to false, blink request reaches `BlinkClock`, eye-rest holds the blink, hide/resume, every rendered frame in range |
 
@@ -115,6 +116,25 @@ points. The wiring is correct on all nine. Two things came out of it:
 * Reduce-motion is not wired to `setIdleEnabled`. The minimal fix is in
   `integrations/local-patch-review/reduce-motion.patch`; the module behaviour it
   relies on is verified here, the AppKit code itself is not.
+
+## Fourth pass: the eyelid contract (1.2.0)
+
+`docs/EYELID-CONTRACT.md`. The local team's on-device C preview found a blink
+that was numerically present and visually absent at `rest ≈ 0.55` (eye pixels
+max 5, mean 0.08). The cause was mine: `PortraitRenderer.blinkAmount` already
+composes eyelid closure once with `max(pose.rest, frame.blink)`, and 1.1.0
+multiplied the blink by `1 - overlay.rest` upstream — a second composition point.
+`max(rest, blink × (1 − rest))` hides the blink for every `rest ≥ 0.5`, which is
+arithmetic, not tuning.
+
+1.2.0 deletes that rule; the renderer is untouched. Measured on both cores here,
+travel at `rest = 0.55` goes from 0.000 to 0.450 and the final peak reaches full
+closure. `EyelidCompositionTests` scores the identical frames under both
+compositions so a case that cannot separate them fails rather than passing twice.
+
+This also corrected a claim made in the previous pass: the four-way weight sum is
+**not** a renderer requirement. `rest` feeds only `blinkAmount`, `parted` only
+`mouthOpening`, and `mouthPose` normalises the `smile`/`pressed` pair itself.
 
 ## Reproducing
 

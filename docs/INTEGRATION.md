@@ -257,9 +257,14 @@ the only way the selected expression changes, and the module never writes it.
 ## 7. What the renderer sees
 
 The renderer's contract is unchanged. It receives an `ExpressionPose` whose four
-weights are finite, inside `0...1`, and sum to at most 1 whenever the base pose
-did — which covers every pose `ExpressionTransition` can produce, since it only
-ever cross-fades between two `ExpressionPose.target` values.
+weights are finite and inside `0...1`.
+
+The module additionally keeps their sum at most 1 whenever the base pose did.
+That is this module's own allocation choice, **not** a renderer requirement:
+`rest` feeds only `blinkAmount`, `parted` only `mouthOpening`, and `mouthPose`
+normalises the `smile`/`pressed` pair itself. Keeping one shared budget makes the
+four numbers interpretable together; its cost is recorded in
+`docs/EYELID-CONTRACT.md` §8.
 
 Layering is the base's remaining headroom rather than an addition:
 

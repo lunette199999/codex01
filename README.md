@@ -15,7 +15,7 @@ The core depends on Foundation alone.
   `ExpressionPose`, plus a compile-check shim and a head-less reproduction of
   `DesktopController.renderFrame()`.
 * `examples/ChoreographyDemo/` — `choreo-demo`, a per-frame CSV/JSONL dump.
-* `Tests/` — 115 XCTest cases; see [docs/TEST-LOG.md](docs/TEST-LOG.md) for what
+* `Tests/` — 127 XCTest cases; see [docs/TEST-LOG.md](docs/TEST-LOG.md) for what
   was actually compiled and run.
 * [docs/INTEGRATION.md](docs/INTEGRATION.md) — the four insertion points.
 * [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) — the composition and mouth-ownership
@@ -23,6 +23,8 @@ The core depends on Foundation alone.
 * [docs/PATCH-REVIEW.md](docs/PATCH-REVIEW.md) — review of the 0.3.5 local
   integration patch against those cases, with the attachments it refers to in
   `integrations/local-patch-review/`.
+* [docs/EYELID-CONTRACT.md](docs/EYELID-CONTRACT.md) — what `rest` and `blink`
+  each mean, where eyelid closure is composed, and the 1.2.0 fix.
 
 ---
 
@@ -189,6 +191,18 @@ is an ordinary cross-fade. Every pose the host can produce satisfies the
 precondition. If a base pose were already over budget the module is guaranteed
 not to make it worse.
 
+**What the renderer actually requires.** Reading `PortraitRenderer` (0.3.5):
+`rest` feeds only `blinkAmount`, `parted` only `mouthOpening`, and `smile` with
+`pressed` go to `mouthPose`, which *normalises that pair itself*
+(`let total = max(1, smile + pressed)`). There is **no four-way sum constraint in
+the renderer.** Keeping `result.total <= 1` is this module's allocation choice —
+it keeps the four numbers interpretable as one budget — not something the
+renderer demands. An earlier version of this document said otherwise; that was
+wrong. A consequence worth knowing is recorded in
+[docs/EYELID-CONTRACT.md](docs/EYELID-CONTRACT.md) §8: because `rest` shares the
+budget with the mouth weights, a smile overlay over a manually selected 闭眼休息
+opens the eyelid by up to 80%.
+
 The reservation is sized on the overlay's total **before** the speech mask is
 applied. Sizing it on what survives the mask would hand weight back to the base
 and step every other component in the same frame — withholding the mouth would
@@ -265,7 +279,7 @@ expression in `updateTimer()`, and the lifecycle calls in
 
 ## Testing
 
-115 XCTest cases, compiled and run. Exactly what ran, on what, and what could
+127 XCTest cases, compiled and run. Exactly what ran, on what, and what could
 not be checked here is recorded in [docs/TEST-LOG.md](docs/TEST-LOG.md) with the
 raw log in `docs/logs/build-and-test.txt`. The composition and mouth-ownership
 cases are set out separately in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md), which

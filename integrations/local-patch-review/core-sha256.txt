@@ -1,15 +1,17 @@
-# sha256 of Sources/ExpressionChoreography/*.swift at ExpressionChoreography 1.1.0
-# Compare against whatever apply.py copied into Sources/ExpressionChoreography.
+# sha256 of Sources/ExpressionChoreography/*.swift at ExpressionChoreography 1.2.0
+# 与 1.1.0 **不是**逐字节一致:1.2.0 删掉了眨眼比例衰减那条规则,
+#   并新增 ChoreographyVersion.swift。见 docs/EYELID-CONTRACT.md。
 #   shasum -a 256 Sources/ExpressionChoreography/*.swift
 
 89352def71a47a887fb6ee2ab439daceb4a72a263009f4124579cb7e943d6011  AmbientScheduler.swift
-39316d5ae2fe6c920f18b413fcd851df46b092c9f602c44cd3ce112c8febca8b  ChoreographyConfiguration.swift
-2c94a39b6006b5ce67227e6906f6f358c7549f40362709a1f2f0b16f2aeeda1d  ChoreographyDirector.swift
+09fa0a22208d8db5ca0b7d17eb1747f92d018699aaf288ad65c1617c63aa5495  ChoreographyConfiguration.swift
+1cc9ef94b93f35e4b66f4f25224935d2a7edbaa655d7e3590d9fa787cd21a761  ChoreographyDirector.swift
 126988d8939cf6eb277c614e2fe4ed992f85c8e9dd24be9bdab64edcb8742c43  ChoreographyEvent.swift
-cdd012f0b34c8665d475d92875f3ae64c53914f599e47e97fccc861e86534776  ChoreographyIO.swift
+98198abb4d716eacae963def1cff40ea8d507bcf6945bbffa8a1fc8cf7e13fa7  ChoreographyIO.swift
 b0c98fed842285797d4715dbf1216f489f7d68e6d2c4e51f183c2959f4e6fb8c  ChoreographyPriority.swift
 bc626a7a006d6ca53055e7201cfb9b4972d516278426655453e487a63a13138e  ChoreographySequence.swift
 ea2021828afcdd255a97fe112e0e3e51760abc703ab624567f3ea79338d34ab6  ChoreographyStep.swift
+895ca07fe0225b9f06ccd54650792f6b8335fa3e6f54ae2830a467440d364acb  ChoreographyVersion.swift
 ab49f61e05727a977c370dff906482d52071140b80bcd0794dbb2135fb18c97b  DeterministicRandom.swift
 60ca759b8718649e14c9ca90124163c510b3ebcf9e3d1a386cd788c552bfe491  Easing.swift
 928ccba9b181f9af0dffd50c7ea1fabe21d4cc0a3dce3e6075d85e6b9c3e81db  ExpressionKey.swift
@@ -18,4 +20,5 @@ bc3b85a783cfe529ea94e6cc2984d05653c7e7c469ca169d990ad1a6c58fdc2a  PoseVocabulary
 93b7c32f65d32c834a06d6950d35eb3be5be5bc6cf55d1da3de3dce2b4479a2f  SequenceLibrary.swift
 9cb8d06995a79a37e2269ebeddc81bb27fab5a949f6d2b78b896a016b1653912  TimeGate.swift
 
-# 15 files
+# 16 files
+# combined (cat in sorted filename order): 3b705cfdb08360ba199dd801957142d45f5d3aae5d48c478e864a501b92e3665

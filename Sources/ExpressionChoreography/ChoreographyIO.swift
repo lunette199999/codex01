@@ -94,7 +94,15 @@ public struct ChoreographyOutput: Equatable, Hashable, Sendable {
     public var pose: PoseWeights
     /// The module's own contribution after masking, for debugging and tests.
     public var overlay: PoseWeights
-    /// Final blink value: the host's own value unless a step overrode it.
+    /// The blink's own request for eyelid closure, `0...1`.
+    ///
+    /// This is **not** the final eyelid position. `pose.rest` is a second request
+    /// for the same quantity, and the renderer resolves the two in one place:
+    /// `max(pose.rest, blink)`. Neither term is scaled by the other anywhere
+    /// upstream — see `docs/EYELID-CONTRACT.md`.
+    ///
+    /// It is the host's own `BlinkClock` value unless a step replaced it with
+    /// `StepBlink.hold(_:)`.
     public var blink: Double
     public var blinkOverridden: Bool
     /// One-frame edge asking the host's `BlinkClock` to start a blink.
